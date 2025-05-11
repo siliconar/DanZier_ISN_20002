@@ -11,5 +11,22 @@
       "name": "BASE1_LAYER",
       "value": 64
     }
-  ]
+  ],
+  "physics": {
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "PLAYER_LAYER"
+      },
+      {
+        "index": 2,
+        "name": "FACILITY_LAYER"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 1,
+      "1": 6,
+      "2": 2
+    }
+  }
 }
