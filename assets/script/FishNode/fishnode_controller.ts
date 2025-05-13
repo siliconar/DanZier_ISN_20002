@@ -20,6 +20,10 @@ export class fishnode_controller extends Component {
     // ---- 以xx速度发射
     Launch(v1: Vec2) {
         this.rigid2d.linearVelocity = v1
+
+
+        
+        console.log(v1.length())
     }
 
 
@@ -78,8 +82,10 @@ export class fishnode_controller extends Component {
         // 激活轮盘，并移动位置
 
         let tmp_pos = this.node.getWorldPosition()
-        UI_wheel_btn_Manager_Controller.Instance.SetWheelMidPos(tmp_pos)
-        UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(true)
+        UI_wheel_btn_Manager_Controller.Instance.SetWheelMidPos(tmp_pos)  // 设置轮盘位置
+        UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(true)    // 显示轮盘
+
+        // 虚拟路径规划打开，并初始化0  未完成
 
     }
 
@@ -95,6 +101,8 @@ export class fishnode_controller extends Component {
 
         // 动画蓄力  未完成
 
+        // 虚拟路径规划，计算并显示  未完成
+
     }
 
     // 由鱼的on消息调用
@@ -102,11 +110,14 @@ export class fishnode_controller extends Component {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
 
-        // 轮盘归位
+
+        // 发射鱼鱼
+        this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
+        // 轮盘归位,其实不用归位
         // 轮盘消失
-
-
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
+
+        // 虚拟路径关闭  未完成
 
     }
 
@@ -116,10 +127,13 @@ export class fishnode_controller extends Component {
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
 
 
-        // 轮盘归位
+        // 发射鱼鱼
+        this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
+        // 轮盘归位,其实不用归位
         // 轮盘消失
-
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
+
+        // 虚拟路径关闭  未完成
 
     }
 

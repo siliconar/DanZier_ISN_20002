@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3 } from 'cc';
+import { _decorator, Component, Node, Vec2, Vec3 } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('UI_wheel_btn_Manager_Controller')
@@ -16,8 +16,11 @@ export class UI_wheel_btn_Manager_Controller extends Component {
 
     //---- 变量
     private _wheel_world_pos:Vec3    //轮盘中心世界坐标，主要为了方便计算
-    value_strength:number;   // 轮盘力量和角度
-    direction:number;          // 轮盘力量和角度
+
+    Vec2_Strength:Vec2=new Vec2(0,0);     // 轮盘力量和角度向量
+
+    readonly max_strength:number = 500;  // 最大力量
+    readonly max_wheel_dist:number = 347/2;   // 轮盘最大距离，当改变轮盘大小的时候，这个一定要改变
 
     //--= 组件
     obj_circle_big:Node = null;   // 范围大圆
@@ -55,27 +58,48 @@ export class UI_wheel_btn_Manager_Controller extends Component {
         this.Set_value_direction(0,0);
     }
 
-    // 依据力量和方向，设置鼠标位置。和SetSmallCirclePos一个功能，不同方式实现
-    Set_value_direction(value:number, angle_deg:number)
+    // 依据力量向量，设置鼠标位置。和SetSmallCirclePos一个功能，不同方式实现
+    Set_value_direction(x:number, y:number)
     {
-
+        // 鼠标小圆的世界位置
+        let small_circle_worldpos = new Vec3(this._wheel_world_pos.x-x, this._wheel_world_pos.y-y, 0)
+        // 设置小圆位置
+        this.obj_circle_small.setWorldPosition(small_circle_worldpos)
+        // 同步更新力量向量
+        this.Vec2_Strength.x =x;
+        this.Vec2_Strength.y = y;
     }
+
 
 
     // 根据鼠标位置，设置,同时计算出力量和方向。 和Set_value_direction一个功能，不同方式实现
     SetSmallCirclePos(iworldpos:Vec3)
     {
-        // 
+        // 力量向量
+        let temp_strengh = new Vec2(this._wheel_world_pos.x - iworldpos.x, this._wheel_world_pos.y - iworldpos.y);
+        // 计算长度
+        let vec2_strengh_dist = temp_strengh.length()  // 向量画面长度
+        let strength_value = this._convert_dist2strength(vec2_strengh_dist)   // 画面长度换算成力量绝对值，也就是速度总和
+
+        // 同步更新力量向量
+        this.Vec2_Strength.x = temp_strengh.x /vec2_strengh_dist * strength_value;
+        this.Vec2_Strength.y = temp_strengh.y /vec2_strengh_dist * strength_value;
 
         // 设置小圆位置
         this.obj_circle_small.setWorldPosition(iworldpos)
     }
 
+    // 把力量值转换为画面长度 未完成
 
-    // 计算力量和方向
-    private _cal_value_direction()
+    // 把画面长度转换为力量值
+    private _convert_dist2strength(d1:number):number
     {
-
+        let temp = d1* this.max_strength/ this.max_wheel_dist;
+        if(temp>this.max_strength)
+        {
+            temp = this.max_strength
+        }
+        return temp;
     }
 
 }
