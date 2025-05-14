@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, Node, Quat, Vec2, Vec3 } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('UI_wheel_btn_Manager_Controller')
@@ -36,6 +36,10 @@ export class UI_wheel_btn_Manager_Controller extends Component {
         this.obj_circle_big = this.node.children[0];
         this.obj_circle_medium = this.node.children[1];
         this.obj_circle_small = this.node.children[2];
+
+
+        // 先把自己隐藏了
+        this.node.active = false;
     }
 
     // update(deltaTime: number) {
@@ -68,6 +72,9 @@ export class UI_wheel_btn_Manager_Controller extends Component {
         // 同步更新力量向量
         this.Vec2_Strength.x =x;
         this.Vec2_Strength.y = y;
+
+        // 设置中椭圆位置
+        this._set_MediumCirclePos(this.Vec2_Strength)
     }
 
 
@@ -87,6 +94,9 @@ export class UI_wheel_btn_Manager_Controller extends Component {
 
         // 设置小圆位置
         this.obj_circle_small.setWorldPosition(iworldpos)
+
+        // 设置中椭圆位置
+        this._set_MediumCirclePos(this.Vec2_Strength)
     }
 
     // 把力量值转换为画面长度 未完成
@@ -100,6 +110,39 @@ export class UI_wheel_btn_Manager_Controller extends Component {
             temp = this.max_strength
         }
         return temp;
+    }
+
+
+    // 依据力量向量，设置中圆位置
+    private _set_MediumCirclePos(v2_strength:Vec2)
+    {
+        const max_width = this.max_wheel_dist * 4/3;   // 当拉满以后，对应的宽度
+        const min_width = 164;    // 当完全不拉，对应的宽度
+
+        const len_strength = v2_strength.length()   // 力量向量的长度
+        // 换算椭圆宽度
+        let w_medium = len_strength / this.max_strength *(max_width - min_width) + min_width;
+        // 换算椭圆中心点世界坐标
+        let v2_strength_norm1 = new Vec2(v2_strength.x/len_strength, v2_strength.y/len_strength)
+        let len_bias = len_strength/ this.max_strength * max_width/4  // 偏心长度。最大偏心是 max_width/4，最小偏心是0，因此这么算
+        let v2_bias = new Vec2(v2_strength_norm1.x*len_bias, v2_strength_norm1.y*len_bias)   // 偏心向量
+        let v3_medium_worldpos = new Vec3(this._wheel_world_pos.x - v2_bias.x,  this._wheel_world_pos.y -v2_bias.y, 0)   // 椭圆中心世界坐标
+
+        // 换算椭圆角度
+        let ang1 = Math.atan2(v2_strength.y, v2_strength.x) * 180/Math.PI;
+
+
+        // 开始设置
+        this.obj_circle_medium.setScale(w_medium/min_width,1)
+        this.obj_circle_medium.setWorldPosition(v3_medium_worldpos)
+        this.obj_circle_medium.setRotationFromEuler(0,0,ang1)
+
+        // Quat.fromEuler(0,0,)
+
+        // this.obj_circle_medium.setRotation();
+
+
+
     }
 
 }

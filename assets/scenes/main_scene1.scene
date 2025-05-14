@@ -494,7 +494,7 @@
       "__id__": 8
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 13
@@ -3203,7 +3203,7 @@
     "_lscale": {
       "__type__": "cc.Vec3",
       "x": 1,
-      "y": 0.5,
+      "y": 1,
       "z": 1
     },
     "_mobility": 0,
@@ -3233,7 +3233,7 @@
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 0.25,
+      "x": 0.5,
       "y": 0.5
     },
     "_id": "afh2jatqtGpI9iCW9Xo3+i"
@@ -3506,8 +3506,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -3.224,
-      "y": -214.8,
+      "x": -110.367,
+      "y": -273.371,
       "z": 0
     },
     "_lrot": {

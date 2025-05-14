@@ -23,7 +23,7 @@ export class fishnode_controller extends Component {
 
 
         
-        console.log(v1.length())
+        // console.log(v1.length())
     }
 
 
@@ -81,9 +81,10 @@ export class fishnode_controller extends Component {
 
         // 激活轮盘，并移动位置
 
+        UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(true)    // 显示轮盘
         let tmp_pos = this.node.getWorldPosition()
         UI_wheel_btn_Manager_Controller.Instance.SetWheelMidPos(tmp_pos)  // 设置轮盘位置
-        UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(true)    // 显示轮盘
+
 
         // 虚拟路径规划打开，并初始化0  未完成
 
