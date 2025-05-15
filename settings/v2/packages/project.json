@@ -23,12 +23,17 @@
       {
         "index": 2,
         "name": "FACILITY_LAYER"
+      },
+      {
+        "index": 3,
+        "name": "FAKE_LAYER"
       }
     ],
     "collisionMatrix": {
       "0": 1,
       "1": 6,
-      "2": 2
+      "2": 2,
+      "3": 0
     }
   }
 }

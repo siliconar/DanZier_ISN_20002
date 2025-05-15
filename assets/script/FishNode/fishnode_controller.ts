@@ -1,5 +1,6 @@
 import { _decorator, Collider2D, Component, Contact2DType, EventTouch, IPhysics2DContact, Node, RigidBody2D, Vec2, Vec3 } from 'cc';
 import { UI_wheel_btn_Manager_Controller } from '../UI_Control/UI_wheel_btn/UI_wheel_btn_Manager_Controller';
+import { UI_Aim_Line_Manager_Controller } from '../UI_Control/UI_Aim_Line/UI_Aim_Line_Manager_Controller';
 const { ccclass, property } = _decorator;
 
 @ccclass('fishnode_controller')
@@ -23,7 +24,7 @@ export class fishnode_controller extends Component {
 
 
         
-        // console.log(v1.length())
+        console.log(v1.length())
     }
 
 
@@ -103,7 +104,11 @@ export class fishnode_controller extends Component {
         // 动画蓄力  未完成
 
         // 虚拟路径规划，计算并显示  未完成
-
+        UI_Aim_Line_Manager_Controller.Instance.Draw_AimLine(this.node.getWorldPosition(), 
+            UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength,
+            4
+        )
+        
     }
 
     // 由鱼的on消息调用
@@ -137,7 +142,6 @@ export class fishnode_controller extends Component {
         // 虚拟路径关闭  未完成
 
     }
-
 
 
 
