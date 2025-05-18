@@ -17,18 +17,13 @@ export class UI_Aim_Line_Manager_Controller extends Component {
 
 
     //---- 变量
-
+    readonly max_predict_lines = 3   // 最多预测多少次
 
 
     //--= 组件
     obj_circle_list:Node[]=[] ;   
     obj_line_list:Node[] =[] ;   
-    // obj_circle1: Node = null;   // 第一个圆
-    // obj_circle2: Node = null;   // 第2个圆
-    // obj_circle3: Node = null;   // 第3个圆
-    obj_line1: Node = null;   // 第一个线
-    obj_line2: Node = null;   // 第2个线
-    obj_line3: Node = null;   // 第3个线
+
 
     start() {
 
@@ -92,39 +87,51 @@ export class UI_Aim_Line_Manager_Controller extends Component {
             {
                 // console.log("有检测" + results.length.toString())
 
-                // 碰撞点
-                const bump_point_v3 = new Vec3(results[0].point.x,results[0].point.y,0)
-                // 反射线
-                const faxian_v2 = results[0].normal  // 法线向量
-                next_ray_v2 = Utils.reflect2D(next_ray_v2, faxian_v2)  // 反射线，也就是下一次方向
+                // --- 先判断类型，墙和球不一样
+                // if (results[0].collider.tag == 0)  // 墙的tag是9
+                {
+                    // 碰撞点
+                    const bump_point_v3 = new Vec3(results[0].point.x, results[0].point.y, 0)
+                    // 反射线
+                    const faxian_v2 = results[0].normal  // 法线向量
+
+                    console.log("虚拟法线:"+ faxian_v2)
+
+                    next_ray_v2 = Utils.reflect2D(next_ray_v2, faxian_v2)  // 反射线，也就是下一次方向
 
 
-                // 下一次起点，实际也是这次的真正终点
-                // 这里需要讲述，为什么碰撞点就是终点。
-                // 因为我们这里的碰撞点，碰撞的是虚拟collider，
-                // 这个虚拟collider已经被我们扩大过了，所以，碰撞点就是碰撞时，鱼的中心点。
-                let last_start_point = next_start_point  // 先存下来本次的起点
-                next_start_point = bump_point_v3   
+                    // 下一次起点，实际也是这次的真正终点
+                    // 这里需要讲述，为什么碰撞点就是终点。
+                    // 因为我们这里的碰撞点，碰撞的是虚拟collider，
+                    // 这个虚拟collider已经被我们扩大过了，所以，碰撞点就是碰撞时，鱼的中心点。
+                    let last_start_point = next_start_point  // 先存下来本次的起点
+                    next_start_point = bump_point_v3
 
-                // 剩余距离
-                left_dist = left_dist - Math.sqrt((last_start_point.x - next_start_point.x) **2 + (last_start_point.y - next_start_point.y) **2)
-                left_dist = left_dist/1;
+                    // 剩余距离
+                    left_dist = left_dist - Math.sqrt((last_start_point.x - next_start_point.x) ** 2 + (last_start_point.y - next_start_point.y) ** 2)
+                    left_dist = left_dist * 1;
 
 
-                
 
-                // 更新结果
-                res_map.push(bump_point_v3)
-                
+
+                    // 更新结果
+                    res_map.push(bump_point_v3)
+                }
+                // else  // 如果是球，球的tag是1
+                // {
+
+                    
+                // }
+
             }
-            else
+            else  // 如果没有碰撞 
             {
                 // 更新结果
                 res_map.push(desire_destiny1)
                 break;
             }
 
-        }while(true && cnt_ray<3)
+        }while(true && cnt_ray< this.max_predict_lines)
 
 
         // // 理想的终点
@@ -163,7 +170,7 @@ export class UI_Aim_Line_Manager_Controller extends Component {
         }
 
         // 显示完了，把没显示的碰撞点和线隐藏了
-        for(let i=res_map.length;i<3;i++)
+        for(let i=res_map.length;i<this.max_predict_lines;i++)
         {
              this.obj_line_list[i].active=false
              this.obj_circle_list[i].active = false;
