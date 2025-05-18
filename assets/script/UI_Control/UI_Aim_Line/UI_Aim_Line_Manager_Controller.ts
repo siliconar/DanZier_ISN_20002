@@ -1,4 +1,4 @@
-import { _decorator, Component, ERaycast2DType, geometry, Node, PhysicsSystem, PhysicsSystem2D, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, ERaycast2DType, geometry, Node, PhysicsSystem, PhysicsSystem2D, UITransform, Vec2, Vec3 } from 'cc';
 import { Utils } from '../../Utils';
 const { ccclass, property } = _decorator;
 
@@ -21,14 +21,30 @@ export class UI_Aim_Line_Manager_Controller extends Component {
 
 
     //--= 组件
-    obj_lastcircle:Node = null;   // 最终的目标圆
-
+    obj_circle_list:Node[]=[] ;   
+    obj_line_list:Node[] =[] ;   
+    // obj_circle1: Node = null;   // 第一个圆
+    // obj_circle2: Node = null;   // 第2个圆
+    // obj_circle3: Node = null;   // 第3个圆
+    obj_line1: Node = null;   // 第一个线
+    obj_line2: Node = null;   // 第2个线
+    obj_line3: Node = null;   // 第3个线
 
     start() {
 
         // 初始化组件
-        this.obj_lastcircle = this.node.children[0]; // 最终的目标圆
-
+        // this.obj_circle1 = this.node.children[0]; // 第一个圆
+        // this.obj_circle2 = this.node.children[1]; // 第一个圆
+        // this.obj_circle3 = this.node.children[2]; // 第一个圆
+        // this.obj_line1 = this.node.children[3]; // 第一个线
+        // this.obj_line2 = this.node.children[4]; // 第2个线
+        // this.obj_line3 = this.node.children[5]; // 第3个线
+        this.obj_circle_list.push(this.node.children[0]); // 第一个圆
+        this.obj_circle_list.push(this.node.children[1]); // 第一个圆
+        this.obj_circle_list.push(this.node.children[2]); // 第一个圆
+        this.obj_line_list.push(this.node.children[3])
+        this.obj_line_list.push(this.node.children[4])
+        this.obj_line_list.push(this.node.children[5])
     }
 
 
@@ -61,9 +77,10 @@ export class UI_Aim_Line_Manager_Controller extends Component {
         let left_dist = desire_dist // 经过折射后，剩余的距离
         let next_ray_v2 = v2_strength.clone()   // 下一次射线方向
         let next_start_point = start_worldpos;     // 下一次的起始点
-        let cnt_bump = 0;   // 碰撞次数
+        let cnt_ray = 0;   // 射线次数
         let res_map = new Array<Vec3>();
         do{
+            cnt_ray = cnt_ray+1;
 
             // 理想的终点
             next_ray_v2.normalize()  // 射线方向归一化
@@ -107,7 +124,7 @@ export class UI_Aim_Line_Manager_Controller extends Component {
                 break;
             }
 
-        }while(true)
+        }while(true && cnt_ray<3)
 
 
         // // 理想的终点
@@ -117,7 +134,41 @@ export class UI_Aim_Line_Manager_Controller extends Component {
         // let desire_destiny = new Vec3(start_worldpos.x+normv2.x*desire_dist , start_worldpos.y+normv2.y*desire_dist,0 )
         
         // 显示
-        this.obj_lastcircle.setWorldPosition(res_map[res_map.length-1])
+        // this.obj_lastcircle.setWorldPosition(res_map[res_map.length-1])
+
+
+
+
+
+        let tmp_last_pos = start_worldpos   // 上一次射线起点
+        for (let i = 0; i < res_map.length; i++)
+        {
+            // 先激活
+             this.obj_line_list[i].active=true
+             this.obj_circle_list[i].active = true;
+            // 设置线
+            let tmpangle = Utils.calculate_angle_deg(tmp_last_pos, res_map[i])
+            let tmpdist = Utils.calculate_dist(tmp_last_pos, res_map[i])
+            // 设置线的角度
+            this.obj_line_list[i].setWorldPosition( tmp_last_pos)  // 设置位置
+            this.obj_line_list[i].setRotationFromEuler(0,0,tmpangle) // 设置角度
+            this.obj_line_list[i].getComponent(UITransform).setContentSize(tmpdist,3)
+            
+
+            // 设置碰撞点
+            this.obj_circle_list[i].setWorldPosition(res_map[i])
+
+            // 最后一步
+            tmp_last_pos = res_map[i]
+        }
+
+        // 显示完了，把没显示的碰撞点和线隐藏了
+        for(let i=res_map.length;i<3;i++)
+        {
+             this.obj_line_list[i].active=false
+             this.obj_circle_list[i].active = false;
+        }
+
     }
 
     // 隐藏并清空

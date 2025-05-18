@@ -1,4 +1,4 @@
-import { Vec2, Vec3 } from "cc";
+import { IVec2Like, Vec2, Vec3 } from "cc";
 
 export class Utils  {
 
@@ -17,10 +17,22 @@ export class Utils  {
     }
 
     // 计算vec3和vec2的距离
-    static calculate_dist32(p1:Vec3, p2:Vec2):number
+    static calculate_dist(p1:IVec2Like, p2:IVec2Like):number
     {
         return Math.sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y))
     }
+
+    // 知道起点终点，计算角度
+    static calculate_angle_deg(p1:IVec2Like, p2:IVec2Like):number
+    {
+      let dx = p2.x - p1.x;
+      let dy = p2.y - p1.y;
+
+      let angleRadians = Math.atan2(dy, dx);
+      return angleRadians * 180 / Math.PI;
+    }
+
+
 
     /**
      * 计算反射向量
