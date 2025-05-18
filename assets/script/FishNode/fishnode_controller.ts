@@ -17,6 +17,7 @@ export class fishnode_controller extends Component {
     //---- 组件
     rigid2d: RigidBody2D = null;
     local_collider: Collider2D = null;  // 碰撞器
+    fake_collider: Collider2D = null;   // 虚拟碰撞器
 
     // ---- 以xx速度发射
     Launch(v1: Vec2) {
@@ -58,7 +59,8 @@ export class fishnode_controller extends Component {
     start() {
 
         this.rigid2d = this.node.getComponent(RigidBody2D)
-
+        this.local_collider = this.node.getComponents(Collider2D)[0]
+        this.fake_collider = this.node.getComponents(Collider2D)[1]
     }
 
     update(deltaTime: number) {
@@ -80,6 +82,9 @@ export class fishnode_controller extends Component {
     onTowerTouchStart(event: EventTouch) {
         // event.preventSwallow = true   //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
 
+        // 一定先把自己的虚拟碰撞体关了
+        // this.fake_collider.enabled = false;
+
         // 激活轮盘，并移动位置
 
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(true)    // 显示轮盘
@@ -88,6 +93,7 @@ export class fishnode_controller extends Component {
 
 
         // 虚拟路径规划打开，并初始化0  未完成
+
 
     }
 
@@ -115,7 +121,8 @@ export class fishnode_controller extends Component {
     onTowerTouchEnd(event: EventTouch) {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
-
+        // 虚拟路径关闭  未完成
+        // this.fake_collider.enabled = true;   // 恢复自己的虚拟碰撞体
 
         // 发射鱼鱼
         this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
@@ -123,7 +130,7 @@ export class fishnode_controller extends Component {
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
 
-        // 虚拟路径关闭  未完成
+
 
     }
 
@@ -132,6 +139,8 @@ export class fishnode_controller extends Component {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
 
+        // 虚拟路径关闭  未完成
+        // this.fake_collider.enabled = true;   // 恢复自己的虚拟碰撞体
 
         // 发射鱼鱼
         this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
@@ -139,7 +148,6 @@ export class fishnode_controller extends Component {
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
 
-        // 虚拟路径关闭  未完成
 
     }
 

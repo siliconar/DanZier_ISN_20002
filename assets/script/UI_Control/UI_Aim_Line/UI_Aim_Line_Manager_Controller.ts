@@ -61,6 +61,7 @@ export class UI_Aim_Line_Manager_Controller extends Component {
         let left_dist = desire_dist // 经过折射后，剩余的距离
         let next_ray_v2 = v2_strength.clone()   // 下一次射线方向
         let next_start_point = start_worldpos;     // 下一次的起始点
+        let cnt_bump = 0;   // 碰撞次数
         let res_map = new Array<Vec3>();
         do{
 
@@ -90,7 +91,7 @@ export class UI_Aim_Line_Manager_Controller extends Component {
 
                 // 剩余距离
                 left_dist = left_dist - Math.sqrt((last_start_point.x - next_start_point.x) **2 + (last_start_point.y - next_start_point.y) **2)
-                left_dist = left_dist*1;
+                left_dist = left_dist/1;
 
 
                 
