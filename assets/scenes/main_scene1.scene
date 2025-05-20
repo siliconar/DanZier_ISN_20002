@@ -842,7 +842,7 @@
     "awakeOnLoad": true,
     "_group": 4,
     "_type": 0,
-    "_allowSleep": true,
+    "_allowSleep": false,
     "_gravityScale": 1,
     "_linearDamping": 0,
     "_angularDamping": 0,
@@ -896,7 +896,7 @@
     "tag": 0,
     "_group": 8,
     "_density": 1,
-    "_sensor": true,
+    "_sensor": false,
     "_friction": 0,
     "_restitution": 0,
     "_offset": {
@@ -1044,7 +1044,7 @@
     "awakeOnLoad": true,
     "_group": 4,
     "_type": 0,
-    "_allowSleep": true,
+    "_allowSleep": false,
     "_gravityScale": 1,
     "_linearDamping": 0,
     "_angularDamping": 0,
@@ -1095,10 +1095,10 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "tag": 1,
+    "tag": 0,
     "_group": 8,
     "_density": 1,
-    "_sensor": true,
+    "_sensor": false,
     "_friction": 0,
     "_restitution": 0,
     "_offset": {
@@ -1246,7 +1246,7 @@
     "awakeOnLoad": true,
     "_group": 4,
     "_type": 0,
-    "_allowSleep": true,
+    "_allowSleep": false,
     "_gravityScale": 1,
     "_linearDamping": 0,
     "_angularDamping": 0,
@@ -1300,7 +1300,7 @@
     "tag": 0,
     "_group": 8,
     "_density": 1,
-    "_sensor": true,
+    "_sensor": false,
     "_friction": 0,
     "_restitution": 0,
     "_offset": {
@@ -1448,7 +1448,7 @@
     "awakeOnLoad": true,
     "_group": 4,
     "_type": 0,
-    "_allowSleep": true,
+    "_allowSleep": false,
     "_gravityScale": 1,
     "_linearDamping": 0,
     "_angularDamping": 0,
@@ -1502,7 +1502,7 @@
     "tag": 0,
     "_group": 8,
     "_density": 1,
-    "_sensor": true,
+    "_sensor": false,
     "_friction": 0,
     "_restitution": 0,
     "_offset": {
@@ -4868,12 +4868,12 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "tag": 1,
+    "tag": 2,
     "_group": 8,
     "_density": 1,
-    "_sensor": true,
+    "_sensor": false,
     "_friction": 0,
-    "_restitution": 0.5,
+    "_restitution": 1,
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -4919,8 +4919,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 110.833,
-      "y": 208.178,
+      "x": 125.938,
+      "y": -264.799,
       "z": 0
     },
     "_lrot": {
@@ -4944,7 +4944,7 @@
       "y": 0,
       "z": 0
     },
-    "_id": "19ITJWJ0tGVZEYZwxr7WVy"
+    "_id": "78IeekWR1ACYrmOmgM+oJ4"
   },
   {
     "__type__": "cc.Node",
@@ -4992,7 +4992,7 @@
       "y": 0,
       "z": 0
     },
-    "_id": "7ev0yBhgxIWo6y2Tw5tCbm"
+    "_id": "76uvtMU4pA5LnVrDN3tJ1p"
   },
   {
     "__type__": "cc.UITransform",
@@ -5014,7 +5014,7 @@
       "x": 0.5,
       "y": 0.5
     },
-    "_id": "58aATJfjREEbfuLtLHZplj"
+    "_id": "e1y3vHIFlF+5mK2QlN1fmm"
   },
   {
     "__type__": "cc.Sprite",
@@ -5053,7 +5053,7 @@
     "_isTrimmedMode": true,
     "_useGrayscale": false,
     "_atlas": null,
-    "_id": "28zZ4xt39AO5BHbeHkP1oS"
+    "_id": "0cp5b0n4BAVb2lcIYkxj8V"
   },
   {
     "__type__": "cc.Node",
@@ -5101,7 +5101,7 @@
       "y": 0,
       "z": 0
     },
-    "_id": "d1xVY0bm5BZotsLgDC85ix"
+    "_id": "86YaLSkjpGD6+M+TbD3E6i"
   },
   {
     "__type__": "cc.UITransform",
@@ -5123,7 +5123,7 @@
       "x": 0.5,
       "y": 0.5
     },
-    "_id": "7ask+rt3dGAqjzlE+XpS1S"
+    "_id": "22h4UaVT5OIbrzzHqV/fJC"
   },
   {
     "__type__": "cc.Sprite",
@@ -5162,7 +5162,7 @@
     "_isTrimmedMode": true,
     "_useGrayscale": false,
     "_atlas": null,
-    "_id": "a4KNoRLG1Jaophi4HOgjU/"
+    "_id": "d5IaZazYpPU5Nmsil/JhBN"
   },
   {
     "__type__": "cc.UITransform",
@@ -5184,7 +5184,7 @@
       "x": 0.5,
       "y": 0.5
     },
-    "_id": "ffT5WN37tJgYWjMv5xhF3c"
+    "_id": "59SX7RkrZNnL6//ZwG3NF+"
   },
   {
     "__type__": "cc.RigidBody2D",
@@ -5212,7 +5212,7 @@
     },
     "_angularVelocity": 0,
     "_fixedRotation": true,
-    "_id": "8eHQCAWrRK8qSJy01mu5ni"
+    "_id": "c8w7hVZN9NIZBiBW8Gbyaw"
   },
   {
     "__type__": "cc.CircleCollider2D",
@@ -5236,7 +5236,7 @@
       "y": 0
     },
     "_radius": 55,
-    "_id": "c3eE2birxAirzxTMYIdckS"
+    "_id": "3foSPXw0ZBKby1cbt1usSj"
   },
   {
     "__type__": "6fb1c01WHdIqpVNUpEbB0A0",
@@ -5249,7 +5249,7 @@
     "_enabled": true,
     "__prefab": null,
     "player_Party": 0,
-    "_id": "7431xBDNhNe5zSTxpDwFwK"
+    "_id": "a7zmwsZpxIGqCbkejR9t9Y"
   },
   {
     "__type__": "cc.CircleCollider2D",
@@ -5261,19 +5261,19 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "tag": 1,
+    "tag": 2,
     "_group": 8,
     "_density": 1,
-    "_sensor": true,
+    "_sensor": false,
     "_friction": 0,
-    "_restitution": 0.5,
+    "_restitution": 1,
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
       "y": 0
     },
     "_radius": 110,
-    "_id": "75XcHrl9JCGJ7wnFAsY4iH"
+    "_id": "f0YEjTeMJNUqkoOWpfIFuV"
   },
   {
     "__type__": "cc.UITransform",

@@ -82,20 +82,28 @@ export class UI_Aim_Line_Manager_Controller extends Component {
             let desire_destiny1 = new Vec3(next_start_point.x + next_ray_v2.x * left_dist, next_start_point.y + next_ray_v2.y * left_dist, 0)  // 理想的终点
 
             // 开始构造射线，以上一次的终点作为起点
-            const results  = PhysicsSystem2D.instance.raycast(next_start_point, desire_destiny1,ERaycast2DType.Closest, 0xFFFFFF)
+
+            // 1<<3 是 FakeLayer 1<<2 是PlayerLayer 1<<1 是PlayerLayer
+            const results  = PhysicsSystem2D.instance.raycast(next_start_point, desire_destiny1,ERaycast2DType.Closest, (1<<3)|(1<<2)|(1<<1))
             if(results.length>0)
             {
                 // console.log("有检测" + results.length.toString())
 
+
+                // let id_closet = -1
+                // for (let kk=0;kk<results.length;kk++)
+                // {
+
+                // }
                 // --- 先判断类型，墙和球不一样
-                // if (results[0].collider.tag == 0)  // 墙的tag是9
+                if (results[0].collider.tag == 0)  // 墙的tag是0
                 {
                     // 碰撞点
                     const bump_point_v3 = new Vec3(results[0].point.x, results[0].point.y, 0)
                     // 反射线
                     const faxian_v2 = results[0].normal  // 法线向量
 
-                    console.log("虚拟法线:"+ faxian_v2)
+                    // console.log("虚拟法线:"+ faxian_v2)
 
                     next_ray_v2 = Utils.reflect2D(next_ray_v2, faxian_v2)  // 反射线，也就是下一次方向
 
@@ -117,11 +125,46 @@ export class UI_Aim_Line_Manager_Controller extends Component {
                     // 更新结果
                     res_map.push(bump_point_v3)
                 }
-                // else  // 如果是球，球的tag是1
-                // {
-
+                else  // 如果是球，球的tag是2
+                {
+                    // 碰撞点
+                    const bump_point_v3 = new Vec3(results[0].point.x, results[0].point.y, 0)
+                    // 法线
+                    const faxian_v2 = results[0].normal  // 法线向量
                     
-                // }
+
+                    let p1 = next_ray_v2  // 入射向量
+                    let p2 = faxian_v2  // 法线向量
+                    const len2 = p2.x * p2.x + p2.y * p2.y;
+                    const dot = p1.x * p2.x + p1.y * p2.y;
+                    const scale = dot / len2;
+
+                    const p1_2 = new Vec2( p2.x * scale, p2.y * scale );   // 法线方向分解
+                    const p1_1 = new Vec2( p1.x - p1_2.x, p1.y - p1_2.y );   // 前进方向分解
+                    next_ray_v2 = p1_1   // 前进方向是未来方向
+                    let next_strength_percent = p1_1.length()/p1.length()
+
+
+
+                    // 下一次起点，实际也是这次的真正终点
+                    // 这里需要讲述，为什么碰撞点就是终点。
+                    // 因为我们这里的碰撞点，碰撞的是虚拟collider，
+                    // 这个虚拟collider已经被我们扩大过了，所以，碰撞点就是碰撞时，鱼的中心点。
+                    let last_start_point = next_start_point  // 先存下来本次的起点
+                    next_start_point = bump_point_v3
+
+                    // 剩余距离
+                    left_dist = left_dist - Math.sqrt((last_start_point.x - next_start_point.x) ** 2 + (last_start_point.y - next_start_point.y) ** 2)
+                    left_dist = left_dist * next_strength_percent;
+
+
+
+
+                    // 更新结果
+                    res_map.push(bump_point_v3)
+
+
+                }
 
             }
             else  // 如果没有碰撞 

@@ -23,7 +23,8 @@ export class fishnode_controller extends Component {
     Launch(v1: Vec2) {
 
         this.rigid2d.linearVelocity = v1
-        
+        // this.rigid2d.linearVelocity = new Vec2(100,0)
+        console.log("发射速度："+v1.length())
     }
 
 
