@@ -19,7 +19,7 @@ export class UI_wheel_btn_Manager_Controller extends Component {
 
     Vec2_Strength:Vec2=new Vec2(0,0);     // 轮盘力量和角度向量
 
-    readonly max_strength:number = 500;  // 最大力量
+    readonly max_strength:number = 120;  // 最大力量
     readonly max_wheel_dist:number = 347/2;   // 轮盘最大距离，当改变轮盘大小的时候，这个一定要改变
 
     //--= 组件

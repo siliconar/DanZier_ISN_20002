@@ -28,18 +28,17 @@ export class UI_Aim_Line_Manager_Controller extends Component {
     start() {
 
         // 初始化组件
-        // this.obj_circle1 = this.node.children[0]; // 第一个圆
-        // this.obj_circle2 = this.node.children[1]; // 第一个圆
-        // this.obj_circle3 = this.node.children[2]; // 第一个圆
-        // this.obj_line1 = this.node.children[3]; // 第一个线
-        // this.obj_line2 = this.node.children[4]; // 第2个线
-        // this.obj_line3 = this.node.children[5]; // 第3个线
+
         this.obj_circle_list.push(this.node.children[0]); // 第一个圆
         this.obj_circle_list.push(this.node.children[1]); // 第一个圆
         this.obj_circle_list.push(this.node.children[2]); // 第一个圆
         this.obj_line_list.push(this.node.children[3])
         this.obj_line_list.push(this.node.children[4])
         this.obj_line_list.push(this.node.children[5])
+
+
+
+        this.Clear_AimLine()
     }
 
 
@@ -177,19 +176,7 @@ export class UI_Aim_Line_Manager_Controller extends Component {
         }while(true && cnt_ray< this.max_predict_lines)
 
 
-        // // 理想的终点
-        // let normv2 = v2_strength.clone()
-        // // let normv2 = new Vec2(1,0)
-        // normv2.normalize()
-        // let desire_destiny = new Vec3(start_worldpos.x+normv2.x*desire_dist , start_worldpos.y+normv2.y*desire_dist,0 )
-        
-        // 显示
-        // this.obj_lastcircle.setWorldPosition(res_map[res_map.length-1])
-
-
-
-
-
+        //--- 下面开始处理瞄准线
         let tmp_last_pos = start_worldpos   // 上一次射线起点
         for (let i = 0; i < res_map.length; i++)
         {
@@ -224,7 +211,11 @@ export class UI_Aim_Line_Manager_Controller extends Component {
     // 隐藏并清空
     Clear_AimLine()
     {
-
+        for(let kk=0;kk<this.obj_circle_list.length;kk++)
+        {
+            this.obj_circle_list[kk].active = false;
+            this.obj_line_list[kk].active = false;
+        }
     }
 
 

@@ -1,4 +1,4 @@
-import { _decorator, Collider2D, Component, Contact2DType, EventTouch, IPhysics2DContact, Node, RigidBody2D, Vec2, Vec3 } from 'cc';
+import { _decorator, Collider2D, Component, Contact2DType, Director, director, EventTouch, IPhysics2DContact, Node, Quat, RigidBody2D, Vec2, Vec3 } from 'cc';
 import { UI_wheel_btn_Manager_Controller } from '../UI_Control/UI_wheel_btn/UI_wheel_btn_Manager_Controller';
 import { UI_Aim_Line_Manager_Controller } from '../UI_Control/UI_Aim_Line/UI_Aim_Line_Manager_Controller';
 const { ccclass, property } = _decorator;
@@ -47,6 +47,7 @@ export class fishnode_controller extends Component {
         // 注销碰撞器
         if (this.local_collider) {
             this.local_collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this)
+            this.local_collider.off(Contact2DType.END_CONTACT, this.onEndContact, this);
         }
 
     }
@@ -60,12 +61,37 @@ export class fishnode_controller extends Component {
         this.rigid2d = this.node.getComponent(RigidBody2D)
         this.local_collider = this.node.getComponents(Collider2D)[0]
         this.fake_collider = this.node.getComponents(Collider2D)[1]
+
+
+        if (this.local_collider) {
+            this.local_collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
+            this.local_collider.on(Contact2DType.END_CONTACT, this.onEndContact, this);
+        }
+
+
+        // 改变颜色
+        this.ChangeColor(this.player_Party)
     }
 
     update(deltaTime: number) {
-
+            
     }
 
+
+    // 依据阵营改变颜色
+    ChangeColor(kk:number)
+    {
+        if(kk==0)
+        {
+            this.node.children[0].active = true;
+            this.node.children[1].active = false;
+        }
+        else if(kk==1)
+        {
+            this.node.children[0].active = false;
+            this.node.children[1].active = true;
+        }
+    }
 
 
     //----- 碰撞回调
@@ -73,7 +99,18 @@ export class fishnode_controller extends Component {
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
 
     }
+    onEndContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
 
+
+        let tmp_angle2 = Math.atan2(this.rigid2d.linearVelocity.y, this.rigid2d.linearVelocity.x)*180/Math.PI;   // 弧度表示目标角度
+
+        // 主意不能在碰撞回调中直接改变rotation，必须使用shedule后
+        this.schedule(function () {
+                    this.node.setRotationFromEuler(0,0,tmp_angle2)
+                },0.01,1) 
+
+
+    }
 
     //----- 手指蓄力部分
 
@@ -105,13 +142,17 @@ export class fishnode_controller extends Component {
         let ty = event.getUILocation().y
         UI_wheel_btn_Manager_Controller.Instance.SetSmallCirclePos(new Vec3(tx,ty,0))
 
+        // 设置player角度
+        let tmp_ang1 = Math.atan2(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.y, UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.x) *180/ Math.PI
+        
+        this.node.setRotationFromEuler(0,0,tmp_ang1)
 
         // 动画蓄力  未完成
 
         // 虚拟路径规划，计算并显示  未完成
         UI_Aim_Line_Manager_Controller.Instance.Draw_AimLine(this.node.getWorldPosition(), 
             UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength,
-            4
+            this.rigid2d.linearDamping
         )
         
     }
@@ -120,8 +161,8 @@ export class fishnode_controller extends Component {
     onTowerTouchEnd(event: EventTouch) {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
-        // 虚拟路径关闭  未完成
-        // this.fake_collider.enabled = true;   // 恢复自己的虚拟碰撞体
+        // 虚拟路径关闭  
+        UI_Aim_Line_Manager_Controller.Instance.Clear_AimLine()
 
         // 发射鱼鱼
         this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
@@ -138,14 +179,15 @@ export class fishnode_controller extends Component {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
 
-        // 虚拟路径关闭  未完成
-        // this.fake_collider.enabled = true;   // 恢复自己的虚拟碰撞体
+        // 虚拟路径关闭 
+        UI_Aim_Line_Manager_Controller.Instance.Clear_AimLine()
 
         // 发射鱼鱼
         this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
         // 轮盘归位,其实不用归位
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
+    
 
 
     }
