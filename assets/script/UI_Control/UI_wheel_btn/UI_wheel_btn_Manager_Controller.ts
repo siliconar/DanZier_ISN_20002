@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Quat, Vec2, Vec3 } from 'cc';
+import { _decorator, Color, Component, Node, Quat, Sprite, Vec2, Vec3 } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('UI_wheel_btn_Manager_Controller')
@@ -40,6 +40,9 @@ export class UI_wheel_btn_Manager_Controller extends Component {
 
         // 先把自己隐藏了
         this.node.active = false;
+
+        // 初始化一些设置
+        this.ChangeColor(false)
     }
 
     // update(deltaTime: number) {
@@ -136,13 +139,21 @@ export class UI_wheel_btn_Manager_Controller extends Component {
         this.obj_circle_medium.setScale(w_medium/min_width,1)
         this.obj_circle_medium.setWorldPosition(v3_medium_worldpos)
         this.obj_circle_medium.setRotationFromEuler(0,0,ang1)
+    }
 
-        // Quat.fromEuler(0,0,)
+    //-------------取消与变色
 
-        // this.obj_circle_medium.setRotation();
-
-
-
+    // 变色
+    ChangeColor(bcancle:boolean)
+    {
+        if(bcancle)  // 如果要取消，那就是红色
+        {
+            this.obj_circle_medium.getComponent(Sprite).color = new Color(255,0,0,255)
+        }
+        else
+        {
+            this.obj_circle_medium.getComponent(Sprite).color = new Color(255,255,255,255)
+        }
     }
 
 }

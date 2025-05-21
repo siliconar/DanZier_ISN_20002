@@ -1,6 +1,7 @@
 import { _decorator, Collider2D, Component, Contact2DType, Director, director, EventTouch, IPhysics2DContact, Node, Quat, RigidBody2D, Vec2, Vec3 } from 'cc';
 import { UI_wheel_btn_Manager_Controller } from '../UI_Control/UI_wheel_btn/UI_wheel_btn_Manager_Controller';
 import { UI_Aim_Line_Manager_Controller } from '../UI_Control/UI_Aim_Line/UI_Aim_Line_Manager_Controller';
+import { UI_Cancle_Manager_Controller } from '../UI_Control/UI_Cancle/UI_Cancle_Manager_Controller';
 const { ccclass, property } = _decorator;
 
 @ccclass('fishnode_controller')
@@ -127,8 +128,9 @@ export class fishnode_controller extends Component {
         let tmp_pos = this.node.getWorldPosition()
         UI_wheel_btn_Manager_Controller.Instance.SetWheelMidPos(tmp_pos)  // 设置轮盘位置
 
-
-        // 虚拟路径规划打开，并初始化0  未完成
+        // 激活取消按钮，并设定位置
+        UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(true)   // 显示
+        UI_Cancle_Manager_Controller.Instance.AutoSet_Worldpos(tmp_pos)  // 设定位置
 
 
     }
@@ -149,7 +151,7 @@ export class fishnode_controller extends Component {
 
         // 动画蓄力  未完成
 
-        // 虚拟路径规划，计算并显示  未完成
+        // 虚拟路径规划，计算并显示  
         UI_Aim_Line_Manager_Controller.Instance.Draw_AimLine(this.node.getWorldPosition(), 
             UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength,
             this.rigid2d.linearDamping
@@ -170,7 +172,8 @@ export class fishnode_controller extends Component {
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
 
-
+        // 消失取消按钮
+        UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
 
     }
 
@@ -188,7 +191,8 @@ export class fishnode_controller extends Component {
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
     
-
+        // 消失取消按钮
+        UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
 
     }
 
