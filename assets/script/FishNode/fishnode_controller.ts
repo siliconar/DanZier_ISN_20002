@@ -142,7 +142,8 @@ export class fishnode_controller extends Component {
         // 轮盘移动蓄力
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
-        UI_wheel_btn_Manager_Controller.Instance.SetSmallCirclePos(new Vec3(tx,ty,0))
+        let touch_worldpos = new Vec3(tx,ty,0)
+        UI_wheel_btn_Manager_Controller.Instance.SetSmallCirclePos(touch_worldpos)
 
         // 设置player角度
         let tmp_ang1 = Math.atan2(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.y, UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.x) *180/ Math.PI
@@ -156,6 +157,9 @@ export class fishnode_controller extends Component {
             UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength,
             this.rigid2d.linearDamping
         )
+
+        // 取消按钮：判断是否进入。目的是控制是否高亮，不需要判断是否发射，发射时会判断的
+        UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)
         
     }
 
@@ -163,11 +167,20 @@ export class fishnode_controller extends Component {
     onTowerTouchEnd(event: EventTouch) {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
+
+        let tx = event.getUILocation().x
+        let ty = event.getUILocation().y
+        let touch_worldpos = new Vec3(tx,ty,0)
+
+
+
         // 虚拟路径关闭  
         UI_Aim_Line_Manager_Controller.Instance.Clear_AimLine()
 
         // 发射鱼鱼
-        this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
+        const bCancleLaunch = UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)   // 判断是否在Cancle区域内
+        if(!bCancleLaunch)  // 如果的确要发射
+            this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
         // 轮盘归位,其实不用归位
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
@@ -182,11 +195,18 @@ export class fishnode_controller extends Component {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
 
+        let tx = event.getUILocation().x
+        let ty = event.getUILocation().y
+        let touch_worldpos = new Vec3(tx,ty,0)
+
+
         // 虚拟路径关闭 
         UI_Aim_Line_Manager_Controller.Instance.Clear_AimLine()
 
         // 发射鱼鱼
-        this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
+        const bCancleLaunch = UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)   // 判断是否在Cancle区域内
+        if(!bCancleLaunch)  // 如果的确要发射
+            this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
         // 轮盘归位,其实不用归位
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
