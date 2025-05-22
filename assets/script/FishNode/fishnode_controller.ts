@@ -1,7 +1,9 @@
-import { _decorator, Collider2D, Component, Contact2DType, Director, director, EventTouch, IPhysics2DContact, Node, Quat, RigidBody2D, Vec2, Vec3 } from 'cc';
+import { _decorator, Collider2D, Component, Contact2DType, Director, director, EventTouch, IPhysics2DContact, Node, PhysicsSystem2D, Quat, RigidBody2D, Vec2, Vec3 } from 'cc';
 import { UI_wheel_btn_Manager_Controller } from '../UI_Control/UI_wheel_btn/UI_wheel_btn_Manager_Controller';
 import { UI_Aim_Line_Manager_Controller } from '../UI_Control/UI_Aim_Line/UI_Aim_Line_Manager_Controller';
 import { UI_Cancle_Manager_Controller } from '../UI_Control/UI_Cancle/UI_Cancle_Manager_Controller';
+import { camera_Manager_Controller } from '../Camera/camera_Manager_Controller';
+import { GlobalConstant } from '../GlobalConstant';
 const { ccclass, property } = _decorator;
 
 @ccclass('fishnode_controller')
@@ -14,6 +16,8 @@ export class fishnode_controller extends Component {
     player_Party: number = 0   // 阵营 [0玩家 1敌对]
 
 
+    // 内部变量
+    isLaunchMoving:boolean = false;   // 这个变量代表：1 是否是玩家手动发射鱼，2. 这个鱼是否在移动
 
     //---- 组件
     rigid2d: RigidBody2D = null;
@@ -23,8 +27,9 @@ export class fishnode_controller extends Component {
     // ---- 以xx速度发射
     Launch(v1: Vec2) {
 
+        // 设置手动发射的鱼鱼,并且在移动
+        this.isLaunchMoving = true;
         this.rigid2d.linearVelocity = v1
-        // this.rigid2d.linearVelocity = new Vec2(100,0)
         console.log("发射速度："+v1.length())
     }
 
@@ -76,6 +81,13 @@ export class fishnode_controller extends Component {
 
     update(deltaTime: number) {
             
+        if(this.isLaunchMoving)   //如果手动发射的鱼鱼还在移动
+        {
+            if(this.rigid2d.linearVelocity.x<=0.1 && this.rigid2d.linearVelocity.y<=0.1)  // 如果鱼鱼停了
+            {
+                this.isLaunchMoving = false;
+            }
+        }
     }
 
 
@@ -98,6 +110,58 @@ export class fishnode_controller extends Component {
     //----- 碰撞回调
     // 碰撞回调
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
+
+    
+
+
+
+        if(otherCollider.group == (1<<1))  // 如果被撞是玩家
+        {
+            //-------- 优先判断是自己处理，还是对面处理
+            // 如果是 进攻方 vs 敌对方，那么进攻方的鱼处理
+            // 如果 两个都是进攻方 ， 那么 根据ID判断大小
+            // 如果两个都是敌对方，那么都不处理
+
+            
+            let selfscript = selfCollider.getComponent(fishnode_controller);
+            let otherscript = otherCollider.getComponent(fishnode_controller);
+            // 如果是 进攻方 vs 敌对方，那么进攻方的鱼处理
+            if(selfscript.player_Party!= otherscript.player_Party)
+            {
+                 if(selfscript.player_Party!=GlobalConstant.Instance.CurRunningPartyID)  // 如果不是进攻方，返回
+                 {
+                    return
+                 }
+                
+                 console.log("碰撞处理")
+                // 如果是进攻方，那么处理
+                // 暂停物理系统 
+                PhysicsSystem2D.instance.enable = false;
+                this.schedule(function () {
+                    PhysicsSystem2D.instance.enable = true;
+                }, 0.3, 1) 
+                // 播放粒子特效 未完成
+
+                // 扣血 未完成（该删除删除）
+                // director.
+
+                // 晃动镜头
+                camera_Manager_Controller.Instance.effectShake(0.06)
+                return
+            }
+            else if(selfscript.player_Party == otherscript.player_Party && selfscript.player_Party == GlobalConstant.Instance.CurRunningPartyID)   
+            {
+                 // 如果 两个都是进攻方 ， 那么 根据ID判断大小
+                // 未完成
+            }
+            else
+            {
+                return
+            }
+            // 如果两个都是敌对方，那么都不处理
+ 
+
+        } // end if(otherCollider.group ==1)  // 如果被撞是玩家
 
     }
     onEndContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {

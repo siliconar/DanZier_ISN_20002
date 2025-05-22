@@ -20,7 +20,8 @@ export class GlobalConstant extends Component {
     @property
     damping_ratio:number = 1;  // 阻尼
 
-    
+    @property
+    CurRunningPartyID:number = 0   // 当前进攻的是哪一方，0是player 1是敌人
 
 
 }
