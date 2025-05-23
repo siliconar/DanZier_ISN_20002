@@ -16,7 +16,7 @@ export class fishnode_controller extends Component {
     @property
     player_Party: number = 0   // 阵营 [0玩家 1敌对]
     @property
-    player_Type:number = 0   // 一共5种类型的鱼鱼
+    player_Type:number = 0   // 一共5种类型的鱼鱼,0碰自己人加攻击，1碰墙壁加攻击，2碰自己人治疗，3回合第一次双倍伤害，4击杀立即增加一次行动
 
     @property
     player_HP:number = 30    // player血量
@@ -35,8 +35,9 @@ export class fishnode_controller extends Component {
     fishimage_node:Node = null; // fish图片
 
     Img_HP_node:Node = null; // HP的node
-    Img_HP:Label = null;  // HP的label
-    Img_Attack:Label = null;  // Attack的label
+    Img_Attack_node:Node = null; // HP的node
+    Img_HP_Label:Label = null;  // HP的label
+    Img_Attack_Label:Label = null;  // Attack的label
 
     // ---- 以xx速度发射
     Launch(v1: Vec2) {
@@ -83,8 +84,9 @@ export class fishnode_controller extends Component {
         this.fake_collider = this.node.getComponents(Collider2D)[1]
         this.fishimage_node = this.node.children[0] // fish图片node
         this.Img_HP_node = this.node.children[1]; // HP的node
-        this.Img_HP = this.Img_HP_node.getComponent(Label);  // HP的label
-        this.Img_Attack = this.node.children[2].getComponent(Label);    // Attack的label
+        this.Img_Attack_node = this.node.children[2]; // Attack的node
+        this.Img_HP_Label = this.Img_HP_node.getComponent(Label);  // HP的label
+        this.Img_Attack_Label = this.Img_Attack_node.getComponent(Label);    // Attack的label
 
         if (this.local_collider) {
             this.local_collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
@@ -94,6 +96,10 @@ export class fishnode_controller extends Component {
 
         // 改变颜色
         this.ChangePartyColor(this.player_Party)
+
+        // 设置一下自己的血量和攻击力
+        this.ChangeHP_withImg(0,false);
+        this.ChangeAttack_withImg(0,false);
     }
 
     update(deltaTime: number) {
@@ -172,7 +178,7 @@ export class fishnode_controller extends Component {
                 }
                 else  // 如果对方是会死
                 {
-
+                    // 未完成
                     director.once(Director.EVENT_AFTER_PHYSICS, () => {
                         otherCollider.node.destroy()    // 直接把子弹销毁
                     })
@@ -180,9 +186,18 @@ export class fishnode_controller extends Component {
                 }
 
                 return
-            }
-            else if (this.player_Party == otherscript.player_Party && this.player_Party == GlobalConstant.Instance.CurRunningPartyID) {
-                // 如果 两个都是进攻方 ， 那么 根据ID判断大小
+            } // end 如果是 进攻方 vs 敌对方
+            else if (this.player_Party == otherscript.player_Party && this.player_Party == GlobalConstant.Instance.CurRunningPartyID) 
+            {
+
+                // --- 如果 两个都是进攻方
+                // 先判断自己有没有特效，没有特效不需要处理
+                if(this.player_Type!=0 && this.player_Type!=2 )
+                {
+                    return;
+                }
+
+                // 根据ID判断大小
                 let bprocess = Utils.collision_choose_byname(this.node.name, otherCollider.node.name)  // 判断是不是自己处理
                 if (!bprocess) // 如果不是自己处理
                     return
@@ -202,17 +217,18 @@ export class fishnode_controller extends Component {
 
 
 
-                // 扣血 等等操作
+                // 加攻击力 等等操作
                 this._fish_aux(otherscript)
 
                 return
 
-            }
-            else
+            } // end 如果 两个都是进攻方 
+            else  // 如果两个都是防御方
             {
+                // 如果两个都是敌对方，那么都不处理
                 return
             }
-            // 如果两个都是敌对方，那么都不处理
+            
  
 
         } // end if(otherCollider.group ==1)  // 如果被撞是玩家
@@ -235,41 +251,48 @@ export class fishnode_controller extends Component {
     //------------ 攻击力部分
     _fish_attack(otherscript:fishnode_controller)
     {
-        // 未完成
-        otherscript.ChangeHP_withImg(-5)
+        // 未完成，其他鱼鱼类型
+        otherscript.ChangeHP_withImg(-this.player_Attack)
     }
 
     //---------- 进攻vs进攻 碰撞部分
     _fish_aux(otherscript:fishnode_controller)
     {
-        // 未完成
+        // 未完成，其他鱼鱼类型
+        if(this.player_Type ==0)  // 如果0型鱼鱼，增加对方攻击力
+        {
+            otherscript.ChangeAttack_withImg(3)  // 未完成 值可能不对
+        }
+        else if(this.player_Type == 2) // 如果2型鱼鱼，增加对方血量
+        {
+            otherscript.ChangeHP_withImg(3)  // 未完成 值可能不对
+        }
     }
 
     // 要改变的血量，同时图片也该
-    ChangeHP_withImg(dHP:number)
+    ChangeHP_withImg(dHP:number, bOpenEffect = true)
     {
-
-        console.log("执行")
-
-        let tmp_originHP = this.player_HP // 记录原始HP
         this.player_HP += dHP
         // 变色
         if(this.player_HP< this.player_MaxHP/3)   // 血量低，得是红色
         {
-            this.Img_HP.color = new Color(231,123,123,255)
+            this.Img_HP_Label.color = new Color(231,123,123,255)
         }
         else if(this.player_HP> 2*this.player_MaxHP/3) // 血量高，就得是绿色
         {
-            this.Img_HP.color = new Color(125,255,83,255);
+            this.Img_HP_Label.color = new Color(125,255,83,255);
         }
         else  // 中等血量，用白色
         {
-            this.Img_HP.color = new Color(255,255,255,255)
+            this.Img_HP_Label.color = new Color(255,255,255,255)
         }
 
         
         // 变大及给改变图片
-        this.Img_HP.string = this.player_HP.toString()
+        this.Img_HP_Label.string = this.player_HP.toString()
+
+        if(!bOpenEffect)  // 如果不需要特效，直接返回
+            return
 
         let t1 = tween(this.Img_HP_node)
         .to(0.3, { scale:  new Vec3(1.6,1.6,1)})
@@ -279,9 +302,23 @@ export class fishnode_controller extends Component {
     }
 
     // 要改变的攻击，同时图片也该
-    ChangeAttack_withImg(dAttack:number)
+    ChangeAttack_withImg(dAttack:number, bOpenEffect = true)
     {
         this.player_Attack += dAttack
+
+        // 变大及给改变图片
+        this.Img_Attack_Label.string = this.player_Attack.toString()
+
+
+        if (!bOpenEffect)  // 如果不需要特效，直接返回
+            return
+
+
+        let t1 = tween(this.Img_Attack_node)
+        .to(0.3, { scale:  new Vec3(1.6,1.6,1)})
+        .to(1, { scale:  new Vec3(1,1,1)})
+        .start()
+
     }
     //----- 手指蓄力部分
 
