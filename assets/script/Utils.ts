@@ -9,6 +9,16 @@ export class Utils  {
         return `${first}_${second}`;
     }
     
+
+    // 碰撞两个人，根据名字选择谁处理
+    static collision_choose_byname(selfname: string, othername: string): boolean
+    {
+      const [first, second] = [selfname, othername].sort();
+      if (first == selfname)
+        return true;
+      else
+        return false;
+    }
     
     static Cal_time_bypos(p1:Vec3, p2:Vec3, Speed:number) : number
     {
