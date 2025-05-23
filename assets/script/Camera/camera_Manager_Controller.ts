@@ -59,8 +59,8 @@ export class camera_Manager_Controller extends Component {
         .to(tweenDuration, { orthoHeight: 1.0*this._origin_orthoHeight })
         .to(tweenDuration, { orthoHeight: shake_ratio*this._origin_orthoHeight })
         .to(tweenDuration, { orthoHeight: 1.0*this._origin_orthoHeight })
-        .to(tweenDuration, { orthoHeight: shake_ratio*this._origin_orthoHeight })
-        .to(tweenDuration, { orthoHeight: 1.0*this._origin_orthoHeight })
+        // .to(tweenDuration, { orthoHeight: shake_ratio*this._origin_orthoHeight })
+        // .to(tweenDuration, { orthoHeight: 1.0*this._origin_orthoHeight })
         .repeat(1) //设置次数
         .start()
 

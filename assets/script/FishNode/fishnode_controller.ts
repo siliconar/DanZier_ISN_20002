@@ -104,6 +104,8 @@ export class fishnode_controller extends Component {
 
     update(deltaTime: number) {
             
+
+
         if(this.isLaunchMoving)   //如果手动发射的鱼鱼还在移动
         {
             if(this.rigid2d.linearVelocity.x<=0.1 && this.rigid2d.linearVelocity.y<=0.1)  // 如果鱼鱼停了
@@ -166,12 +168,12 @@ export class fishnode_controller extends Component {
                     PhysicsSystem2D.instance.enable = false;
                     this.schedule(function () {
                         PhysicsSystem2D.instance.enable = true;
-                    }, 0.4, 1)   // 恢复物理系统
+                    }, 0.05, 1)   // 恢复物理系统
                     // 播放粒子特效 未完成
     
     
                     // 晃动镜头
-                    camera_Manager_Controller.Instance.effectShake(0.08,0.98)
+                    camera_Manager_Controller.Instance.effectShake(0.06,0.98)
     
                     // 扣血 等等操作
                     this._fish_attack(otherscript)
@@ -208,12 +210,12 @@ export class fishnode_controller extends Component {
                 PhysicsSystem2D.instance.enable = false;
                 this.schedule(function () {
                     PhysicsSystem2D.instance.enable = true;
-                }, 0.4, 1) 
+                }, 0.1, 1) 
 
                 // 播放粒子特效 未完成
 
-                // 晃动镜头
-                camera_Manager_Controller.Instance.effectShake(0.08,0.98)
+                // 晃动镜头,碰自己人不晃动
+                // camera_Manager_Controller.Instance.effectShake(0.08,0.98)
 
 
 
@@ -237,12 +239,12 @@ export class fishnode_controller extends Component {
     onEndContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
 
 
-        let tmp_angle2 = Math.atan2(this.rigid2d.linearVelocity.y, this.rigid2d.linearVelocity.x)*180/Math.PI;   // 弧度表示目标角度
+        // let tmp_angle2 = Math.atan2(this.rigid2d.linearVelocity.y, this.rigid2d.linearVelocity.x)*180/Math.PI;   // 弧度表示目标角度
 
-        // 主意不能在碰撞回调中直接改变rotation，必须使用shedule后
-        this.schedule(function () {
-                    this.fishimage_node.setRotationFromEuler(0,0,tmp_angle2)
-                },0.01,1) 
+        // // 主意不能在碰撞回调中直接改变rotation，必须使用shedule后
+        // this.schedule(function () {
+        //             this.fishimage_node.setRotationFromEuler(0,0,tmp_angle2)
+        //         },0.01,1) 
 
 
     }
@@ -266,6 +268,15 @@ export class fishnode_controller extends Component {
         else if(this.player_Type == 2) // 如果2型鱼鱼，增加对方血量
         {
             otherscript.ChangeHP_withImg(3)  // 未完成 值可能不对
+        }
+
+        if(otherscript.player_Type == 0) // 如果0型鱼鱼，增加对方攻击力
+        {
+            this.ChangeAttack_withImg(3)  // 未完成 值可能不对
+        }
+        else if(otherscript.player_Type == 2) // 如果0型鱼鱼，增加对方攻击力
+        {
+            this.ChangeHP_withImg(3)  // 未完成 值可能不对
         }
     }
 
