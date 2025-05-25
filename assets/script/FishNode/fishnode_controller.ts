@@ -48,7 +48,22 @@ export class fishnode_controller extends Component {
         console.log("发射速度："+v1.length())
     }
 
+    // ---- 角速度发射
+    // 角度相关变量
+    cur_ang_speed_deg:number =0;
+    dang_deg:number =0;
+    LaunchRoation()  
+    {
+        const cur_angle = this.fishimage_node.angle
 
+        let desired_angle:number[] = [cur_angle+80, cur_angle+120,cur_angle+140]
+       let t=tween(this.fishimage_node)
+        .to(0.3, { angle: desired_angle[0] })
+        .to(0.3, { angle: desired_angle[1] })
+        .to(0.3, { angle: desired_angle[2] })
+        .repeat(1) //设置次数
+        .start()
+    }
 
     protected onLoad(): void {
         // super.onLoad()
@@ -113,6 +128,12 @@ export class fishnode_controller extends Component {
                 this.isLaunchMoving = false;
             }
         }
+
+        // 角速度相关
+        // if(this.cur_ang_speed_deg>0)
+        // {
+
+        // }
     }
 
 
@@ -164,13 +185,16 @@ export class fishnode_controller extends Component {
                 if(otherscript.player_HP - this.player_Attack > 0) 
                 {
 
+
                     // 暂停物理系统 
                     PhysicsSystem2D.instance.enable = false;
                     this.schedule(function () {
                         PhysicsSystem2D.instance.enable = true;
                     }, 0.05, 1)   // 恢复物理系统
                     // 播放粒子特效 未完成
-    
+
+                    // 被撞的先转起来
+                    otherscript.LaunchRoation()
     
                     // 晃动镜头
                     camera_Manager_Controller.Instance.effectShake(0.06,0.98)
@@ -214,7 +238,7 @@ export class fishnode_controller extends Component {
 
                 // 播放粒子特效 未完成
 
-                // 晃动镜头,碰自己人不晃动
+                // 晃动镜头,【注意】碰自己人不晃动，下面代码删除
                 // camera_Manager_Controller.Instance.effectShake(0.08,0.98)
 
 
@@ -270,11 +294,11 @@ export class fishnode_controller extends Component {
             otherscript.ChangeHP_withImg(3)  // 未完成 值可能不对
         }
 
-        if(otherscript.player_Type == 0) // 如果0型鱼鱼，增加对方攻击力
+        if(otherscript.player_Type == 0) // 如果0型鱼鱼，增加自己攻击力
         {
             this.ChangeAttack_withImg(3)  // 未完成 值可能不对
         }
-        else if(otherscript.player_Type == 2) // 如果0型鱼鱼，增加对方攻击力
+        else if(otherscript.player_Type == 2) // 如果0型鱼鱼，增加自己攻击力
         {
             this.ChangeHP_withImg(3)  // 未完成 值可能不对
         }
