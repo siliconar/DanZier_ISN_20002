@@ -20,8 +20,30 @@ export class GlobalConstant extends Component {
     @property
     damping_ratio:number = 1;  // 阻尼
 
-    @property
-    CurRunningPartyID:number = 0   // 当前进攻的是哪一方，0是player 1是敌人
+    
+
+    // ---- 场景之间交互的内容
+    Player0FishTypes:number[] = [0,0,0,0,0];   // 己方5张鱼鱼类型
+    Player1FishTypes:number[] = [2,2,2,2,2];    // 敌方5张鱼鱼类型
+
+
+    //--- 内部变量
+    FishTypes_List: Map<number, number[]> = new Map<number, number[]>();   // 注册所有的Tube
+
+    protected start(): void {
+        // 变量初始化
+        this.FishTypes_List.set(0,this.Player0FishTypes);
+        this.FishTypes_List.set(1,this.Player1FishTypes);
+    }
+
+    // 取出一个鱼鱼,并返回类型。正常返回类型，如果没有鱼了返回-1
+    ApplyOneFishType(partyID:number):number
+    {
+        if(this.FishTypes_List.get(partyID).length == 0) //如果没有鱼了返回-1
+            return -1;
+
+        return this.FishTypes_List.get(partyID).pop()
+    }
 
 
 }

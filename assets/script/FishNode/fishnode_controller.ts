@@ -5,6 +5,7 @@ import { UI_Cancle_Manager_Controller } from '../UI_Control/UI_Cancle/UI_Cancle_
 import { camera_Manager_Controller } from '../Camera/camera_Manager_Controller';
 import { GlobalConstant } from '../GlobalConstant';
 import { Utils } from '../Utils';
+import { Master_main_scene1 } from '../GameMaster/Master_main_scene1';
 const { ccclass, property } = _decorator;
 
 @ccclass('fishnode_controller')
@@ -32,12 +33,31 @@ export class fishnode_controller extends Component {
     rigid2d: RigidBody2D = null;
     local_collider: Collider2D = null;  // 碰撞器
     fake_collider: Collider2D = null;   // 虚拟碰撞器
+
+    Img_undocircle:Node = null;     // 可执行节点的绿圈
     fishimage_node:Node = null; // fish图片
 
     Img_HP_node:Node = null; // HP的node
     Img_Attack_node:Node = null; // HP的node
     Img_HP_Label:Label = null;  // HP的label
     Img_Attack_Label:Label = null;  // Attack的label
+
+
+
+    // 初始设置位置与旋转角度
+    SetWorldPos(p1:Vec3)
+    {
+        this.node.setWorldPosition(p1);
+    }
+    SetLocalPos(p1:Vec3)
+    {
+        this.node.setPosition(p1);
+    }
+    SetAngle(ang1_deg:number)
+    {
+        this.fishimage_node.angle = ang1_deg;
+    }
+
 
     // ---- 以xx速度发射
     Launch(v1: Vec2) {
@@ -72,6 +92,22 @@ export class fishnode_controller extends Component {
         this.node.on(Node.EventType.TOUCH_MOVE, this.onTowerTouchMove, this)
         this.node.on(Node.EventType.TOUCH_END, this.onTowerTouchEnd, this)
         this.node.on(Node.EventType.TOUCH_CANCEL, this.onTowerTouchCancel, this)
+
+
+        // 组件初始化
+        // 鱼鱼非常特殊，因为要外部初始化，所以组件初始化放onload
+        this.rigid2d = this.node.getComponent(RigidBody2D)
+        this.local_collider = this.node.getComponents(Collider2D)[0]
+        this.fake_collider = this.node.getComponents(Collider2D)[1]
+
+        this.Img_undocircle = this.node.children[0];  // 可执行的绿圈
+        this.fishimage_node = this.node.children[1] // fish图片node
+        this.Img_HP_node = this.node.children[2]; // HP的node
+        this.Img_Attack_node = this.node.children[3]; // Attack的node
+        this.Img_HP_Label = this.Img_HP_node.getComponent(Label);  // HP的label
+        this.Img_Attack_Label = this.Img_Attack_node.getComponent(Label);    // Attack的label
+
+
     }
 
     protected onDestroy(): void {
@@ -94,27 +130,21 @@ export class fishnode_controller extends Component {
 
     start() {
 
-        this.rigid2d = this.node.getComponent(RigidBody2D)
-        this.local_collider = this.node.getComponents(Collider2D)[0]
-        this.fake_collider = this.node.getComponents(Collider2D)[1]
-        this.fishimage_node = this.node.children[0] // fish图片node
-        this.Img_HP_node = this.node.children[1]; // HP的node
-        this.Img_Attack_node = this.node.children[2]; // Attack的node
-        this.Img_HP_Label = this.Img_HP_node.getComponent(Label);  // HP的label
-        this.Img_Attack_Label = this.Img_Attack_node.getComponent(Label);    // Attack的label
+        // 组件初始化
+        // 鱼鱼非常特殊，因为要外部初始化，所以组件初始化放onload
 
         if (this.local_collider) {
             this.local_collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
             this.local_collider.on(Contact2DType.END_CONTACT, this.onEndContact, this);
         }
 
-
-        // 改变颜色
-        this.ChangePartyColor(this.player_Party)
+        // 加载图片
+        // this.ChangePartyColor(this.player_Party)
 
         // 设置一下自己的血量和攻击力
         this.ChangeHP_withImg(0,false);
         this.ChangeAttack_withImg(0,false);
+
     }
 
     update(deltaTime: number) {
@@ -173,7 +203,7 @@ export class fishnode_controller extends Component {
             // 如果是 进攻方 vs 敌对方，那么进攻方的鱼处理
             if(this.player_Party!= otherscript.player_Party)
             {
-                 if(this.player_Party!=GlobalConstant.Instance.CurRunningPartyID)  // 如果不是进攻方，不处理
+                 if(this.player_Party!=Master_main_scene1.Instance.CurRunningPartyID)  // 如果不是进攻方，不处理
                  {
                     return
                  }
@@ -213,7 +243,7 @@ export class fishnode_controller extends Component {
 
                 return
             } // end 如果是 进攻方 vs 敌对方
-            else if (this.player_Party == otherscript.player_Party && this.player_Party == GlobalConstant.Instance.CurRunningPartyID) 
+            else if (this.player_Party == otherscript.player_Party && this.player_Party == Master_main_scene1.Instance.CurRunningPartyID) 
             {
 
                 // --- 如果 两个都是进攻方
