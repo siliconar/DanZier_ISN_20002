@@ -28,7 +28,7 @@ export class fishnode_controller extends Component {
 
     // 内部变量
     // isLaunchMoving:boolean = false;   // 这个变量代表：1 是否是玩家手动发射鱼，2. 这个鱼是否在移动
-    isAllowLaunch:boolean = false;   // 是否允许发射，也就是等待发射
+    isAllowLaunch:boolean = false;   // 是否允许发射，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
 
     //---- 组件
     rigid2d: RigidBody2D = null;
@@ -69,6 +69,8 @@ export class fishnode_controller extends Component {
             console.error("异常发射，isAllowLaunch=false")
         }
 
+        // 是否允许发射，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
+        this.isAllowLaunch =false;
 
         // 设置手动发射的鱼鱼,并且在移动
         // this.isLaunchMoving = true;
@@ -468,6 +470,9 @@ export class fishnode_controller extends Component {
         // 消失取消按钮
         UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
 
+        // 告诉游戏导演，已经发射
+        Master_main_scene1.Instance.callback_UserLaunched();
+
     }
 
     // 由鱼的on消息调用
@@ -493,6 +498,9 @@ export class fishnode_controller extends Component {
     
         // 消失取消按钮
         UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
+
+        // 告诉游戏导演，已经发射
+        Master_main_scene1.Instance.callback_UserLaunched();
 
     }
 

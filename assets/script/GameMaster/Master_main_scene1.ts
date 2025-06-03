@@ -29,6 +29,13 @@ export class Master_main_scene1 extends Component {
     GameResult:number =0;    // 游戏是否结束。0悬而未决，-1用户输了，1用户赢了
     CurRunningPartyID:number = 0   // 当前进攻的是哪一方，0是player 1是敌人
 
+
+    private _isUserLaunched:boolean = true;    // 是否用户已经发射了，这个用于控制阻塞，当用户发射前为false，发射后为true，让阻塞通过。
+    private _launchResolvers: (() => void) = null; // 配合上面的
+
+    private _checkstop_Resolver:(() => void) = null; // 用于阻塞“等待所有鱼鱼停止”
+
+
     //--= 组件
     obj_Musk:Node = null;
     obj_topcurtain:Node = null;   // 上幕布
@@ -118,25 +125,27 @@ export class Master_main_scene1 extends Component {
             // 开始小局N次。所谓小局: 每操作一次，直到全部鱼鱼停止移动，算一个小局
             do{
                 // 点亮undo_circle
-                if(this.CurRunningPartyID ==0) // 如果轮到玩家操作，才需要点亮undo_circle
-                {
-                    for(const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
-                    {
-                        const i_script = i_node.getComponent(fishnode_controller);
-                        if(i_script.player_Party == this.CurRunningPartyID && i_script.isAllowLaunch == true)  // 如果的确是执行者,且可发射
-                        {
-                            i_script.Img_undocircle.active = true;  // 正式点亮undo_circle
-                        }
-                    }
-                }
+                this._control_undo_circle(true);
 
                 // 关闭遮罩，同意行动
                 this.obj_Musk.active = false;
 
                 // 设置允许用户发射标志位
-                // 回调：用户发射后，关闭所有undo_circle；同时打开遮罩，禁止行动；设置用户已经发射标志位
+                this._isUserLaunched = false;   // 设置用户还未发射，然后等待
 
+                // 回调：用户发射后，关闭所有undo_circle；同时打开遮罩，禁止行动；设置用户已经发射标志位
                 // 等待用户发射标志位，也就是等待用户发射。发射后向下执行
+                await this.waitForLaunch();
+
+                // 关闭所有undo_circle；
+                this._control_undo_circle(false);
+
+
+                // 同时打开遮罩，禁止行动；
+                this.obj_Musk.active = true;
+                // 等待一下，防止还没有发射出去
+                await this.sleep(500);
+
                 // 是否全部鱼鱼停止移动
                 // 是否对方全部噶了，如果噶了，设置游戏结束标志位
 
@@ -322,10 +331,69 @@ export class Master_main_scene1 extends Component {
             (resolve) => { resolve(); });
     }
 
+    // 等待用户发射
+    async waitForLaunch(): Promise<void> {
+        if (this._isUserLaunched) return;
+
+        return new Promise<void>(resolve => {
+            this._launchResolvers =resolve;
+        });
+    }
+
+
+    // 回调：用户发射后，运行此函数，让整体向下执行
+    callback_UserLaunched()
+    {
+        if(this._isUserLaunched == true)
+        {
+            console.error("不可能出现这里，用户异常callback发射")
+        }
+
+        this._isUserLaunched = true;  // 用户已经发射
+        
+        this._launchResolvers(); // 让刚才存储的resolve执行，唤醒主game进程
+        this._launchResolvers = null;
+    }
+
+    // 等待所有鱼鱼停止
+    async waitForAllFishStop():Promise<void>
+    {
+        // 未完成，可能还不能这么些
+        return new Promise<void>(resolve => {
+            this._checkstop_Resolver = resolve;
+        });
+    }
 
     // 休眠
     async sleep(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // 点亮或者关闭undo_circle
+    private _control_undo_circle(bopen: boolean) {
+        if (this.CurRunningPartyID == 0) // 如果轮到玩家操作，才需要点亮undo_circle
+        {
+            for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+            {
+                const i_script = i_node.getComponent(fishnode_controller);
+
+                if (bopen)  // 如果是要打开undo_circle
+                {
+                    if (i_script.player_Party == this.CurRunningPartyID && i_script.isAllowLaunch == true)  // 如果的确是执行者,且可发射
+                    {
+                        i_script.Img_undocircle.active = true;  // 正式点亮undo_circle
+                    }
+                }
+                else // 如果是要关闭undo_circle
+                {
+                    if (i_script.player_Party == this.CurRunningPartyID)  // 注意关闭的逻辑不一样
+                    {
+                        i_script.Img_undocircle.active = false;  // 关闭undo_circle
+                    }
+                }
+
+            }
+        }
     }
 
 
