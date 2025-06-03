@@ -27,7 +27,8 @@ export class fishnode_controller extends Component {
     player_Attack:number = 5;   // player攻击力
 
     // 内部变量
-    isLaunchMoving:boolean = false;   // 这个变量代表：1 是否是玩家手动发射鱼，2. 这个鱼是否在移动
+    // isLaunchMoving:boolean = false;   // 这个变量代表：1 是否是玩家手动发射鱼，2. 这个鱼是否在移动
+    isAllowLaunch:boolean = false;   // 是否允许发射，也就是等待发射
 
     //---- 组件
     rigid2d: RigidBody2D = null;
@@ -62,8 +63,15 @@ export class fishnode_controller extends Component {
     // ---- 以xx速度发射
     Launch(v1: Vec2) {
 
+        // 安全检查
+        if(this.isAllowLaunch == false) // 如果不允许发射的被发射了，证明代码逻辑有错
+        {
+            console.error("异常发射，isAllowLaunch=false")
+        }
+
+
         // 设置手动发射的鱼鱼,并且在移动
-        this.isLaunchMoving = true;
+        // this.isLaunchMoving = true;
         this.rigid2d.linearVelocity = v1
         console.log("发射速度："+v1.length())
     }
@@ -151,13 +159,13 @@ export class fishnode_controller extends Component {
             
 
 
-        if(this.isLaunchMoving)   //如果手动发射的鱼鱼还在移动
-        {
-            if(this.rigid2d.linearVelocity.x<=0.1 && this.rigid2d.linearVelocity.y<=0.1)  // 如果鱼鱼停了
-            {
-                this.isLaunchMoving = false;
-            }
-        }
+        // if(this.isLaunchMoving)   //如果手动发射的鱼鱼还在移动
+        // {
+        //     if(this.rigid2d.linearVelocity.x<=0.1 && this.rigid2d.linearVelocity.y<=0.1)  // 如果鱼鱼停了
+        //     {
+        //         this.isLaunchMoving = false;
+        //     }
+        // }
 
         // 角速度相关
         // if(this.cur_ang_speed_deg>0)

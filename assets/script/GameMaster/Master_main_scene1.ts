@@ -102,10 +102,37 @@ export class Master_main_scene1 extends Component {
         {
             // 播放谁是执行者
             await this.play_who_turn();
+
+            // 根据执行者，设置允许用户发射标志位(isAllowLaunch)
+            // let cnt_executer = 0;  // 一次小局中，执行者的数量
+            for(const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+            {
+                const i_script = i_node.getComponent(fishnode_controller);
+                if(i_script.player_Party == this.CurRunningPartyID)  // 如果的确是执行者
+                {
+                    i_script.isAllowLaunch = true;
+                    // cnt_executer++;
+                }
+            }
+
             // 开始小局N次。所谓小局: 每操作一次，直到全部鱼鱼停止移动，算一个小局
             do{
                 // 点亮undo_circle
+                if(this.CurRunningPartyID ==0) // 如果轮到玩家操作，才需要点亮undo_circle
+                {
+                    for(const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+                    {
+                        const i_script = i_node.getComponent(fishnode_controller);
+                        if(i_script.player_Party == this.CurRunningPartyID && i_script.isAllowLaunch == true)  // 如果的确是执行者,且可发射
+                        {
+                            i_script.Img_undocircle.active = true;  // 正式点亮undo_circle
+                        }
+                    }
+                }
+
                 // 关闭遮罩，同意行动
+                this.obj_Musk.active = false;
+
                 // 设置允许用户发射标志位
                 // 回调：用户发射后，关闭所有undo_circle；同时打开遮罩，禁止行动；设置用户已经发射标志位
 
