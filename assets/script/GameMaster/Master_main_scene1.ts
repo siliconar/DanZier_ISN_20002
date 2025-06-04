@@ -101,25 +101,27 @@ export class Master_main_scene1 extends Component {
         // 播放目标，未完成
 
 
-        // 开始交替执行循环
-        do {
-            // 播放谁是执行者
-            await this.play_who_turn();
+        // 小局循环。小局：一方操作一次，直到所有鱼鱼停止移动，算一个小局。N次小局后，双方把自己的行动力都消耗完了跳出。
+        // 中局循环。中局：双方把自己的行动力都消耗完了，算一次中局。之后重新发奖励卡牌，交换先手，继续。直到一方所有鱼鱼都噶了结束。
 
-            // 根据执行者，设置允许用户发射标志位(isAllowLaunch)
-            // let cnt_executer = 0;  // 一次小局中，执行者的数量
+
+        // 开始中局循环。
+        do {
+
+
+            // 设置允许用户发射标志位(cntAllowLaunch)，敌我双方都被发了标志位。
             for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
             {
                 const i_script = i_node.getComponent(fishnode_controller);
-                if (i_script.player_Party == this.CurRunningPartyID)  // 如果的确是执行者
-                {
-                    i_script.isAllowLaunch = true;
-                    // cnt_executer++;
-                }
+                i_script.cntAllowLaunch = 1;
             }
 
             // 开始小局N次。所谓小局: 每操作一次，直到全部鱼鱼停止移动，算一个小局
             do {
+
+                // 播放谁是执行者,"你的回合"
+                await this.play_who_turn();
+
                 // 点亮undo_circle
                 this._control_undo_circle(true);
 
@@ -146,14 +148,17 @@ export class Master_main_scene1 extends Component {
                 await this.waitForAllFishStop()
 
                 // 肯定碰撞中，还有一些小动画，等待完毕
-                await this.sleep(2000)  // 等待2s
+                await this.sleep(1000)  // 等待1s
 
                 // 是否对方全部噶了，如果噶了，设置游戏结束标志位
-                this.GameResult = this.gameEndCheck();
-                if (-1 != this.GameResult)  // 如果分出胜负了
-                {
-                    break;
-                }
+                // this.GameResult = this.gameEndCheck();
+                // if (-1 != this.GameResult)  // 如果分出胜负了
+                // {
+                //     break;
+                // } 
+                小局如果发生游戏结束还得想想
+                中局还得想想
+                中途加入的鱼鱼怎么给行动力，还得想想。
 
                 // 判断，是否执行力消耗完毕
                 const isAllExecutorDone = this.allExecutorDone_Check();
@@ -161,6 +166,12 @@ export class Master_main_scene1 extends Component {
                 // 如果行动力消耗干净了，跳出，否则，继续循环
                 if (true == isAllExecutorDone)
                     break;
+                else  // 如果还行行动力剩余，继续小局循环
+                {
+                    // 改变先手
+                    this.switch_CurRunningPartyID();
+                    continue;
+                }
 
             } while (true)
 
@@ -172,6 +183,9 @@ export class Master_main_scene1 extends Component {
             // 走到这里，说明游戏未结束
             // 切换用户，跳回到第一步
 
+            // 双方发放奖励卡牌
+
+            // 播放“交换先手动画”
 
             // 把遮罩打开，未完成，测试用，最后删除
             this.obj_Musk.active = true;
@@ -418,8 +432,8 @@ export class Master_main_scene1 extends Component {
         for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
         {
             const i_script = i_node.getComponent(fishnode_controller);
-            // 如果是当前行动者,且还可以发射,说明没消耗完行动力
-            if (i_script.player_Party == this.CurRunningPartyID && i_script.isAllowLaunch == true)   // 如果是当前行动者,且还可以发射
+            // 如果还可以发射,说明没消耗完行动力
+            if (i_script.cntAllowLaunch > 0)   // 如果还可以发射
             {
                 return false;
             }
@@ -427,7 +441,13 @@ export class Master_main_scene1 extends Component {
         return true;
     }
 
-
+    // 切换先手变量，只有变量无动画
+    private switch_CurRunningPartyID() {
+        if (this.CurRunningPartyID == 0)
+            this.CurRunningPartyID = 1;
+        else
+            this.CurRunningPartyID = 0;
+    }
 
     // 休眠
     async sleep(ms: number): Promise<void> {
@@ -444,7 +464,7 @@ export class Master_main_scene1 extends Component {
 
                 if (bopen)  // 如果是要打开undo_circle
                 {
-                    if (i_script.player_Party == this.CurRunningPartyID && i_script.isAllowLaunch == true)  // 如果的确是执行者,且可发射
+                    if (i_script.player_Party == this.CurRunningPartyID && i_script.cntAllowLaunch > 0)  // 如果的确是执行者,且可发射
                     {
                         i_script.Img_undocircle.active = true;  // 正式点亮undo_circle
                     }

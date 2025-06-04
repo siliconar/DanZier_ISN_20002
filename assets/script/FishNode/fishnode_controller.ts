@@ -17,45 +17,42 @@ export class fishnode_controller extends Component {
     @property
     player_Party: number = 0   // 阵营 [0玩家 1敌对]
     @property
-    player_Type:number = 0   // 一共5种类型的鱼鱼,0碰自己人加攻击，1碰墙壁加攻击，2碰自己人治疗，3回合第一次双倍伤害，4击杀立即增加一次行动
+    player_Type: number = 0   // 一共5种类型的鱼鱼,0碰自己人加攻击，1碰墙壁加攻击，2碰自己人治疗，3回合第一次双倍伤害，4击杀立即增加一次行动
 
     @property
-    player_HP:number = 30    // player血量
-    player_MaxHP:number = 30  // player最大血量
+    player_HP: number = 30    // player血量
+    player_MaxHP: number = 30  // player最大血量
 
     @property
-    player_Attack:number = 5;   // player攻击力
+    player_Attack: number = 5;   // player攻击力
 
     // 内部变量
     // isLaunchMoving:boolean = false;   // 这个变量代表：1 是否是玩家手动发射鱼，2. 这个鱼是否在移动
-    isAllowLaunch:boolean = false;   // 是否允许发射，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
+    cntAllowLaunch: number = 0;   // 允许发射次数，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
 
     //---- 组件
     rigid2d: RigidBody2D = null;
     local_collider: Collider2D = null;  // 碰撞器
     fake_collider: Collider2D = null;   // 虚拟碰撞器
 
-    Img_undocircle:Node = null;     // 可执行节点的绿圈
-    fishimage_node:Node = null; // fish图片
+    Img_undocircle: Node = null;     // 可执行节点的绿圈
+    fishimage_node: Node = null; // fish图片
 
-    Img_HP_node:Node = null; // HP的node
-    Img_Attack_node:Node = null; // HP的node
-    Img_HP_Label:Label = null;  // HP的label
-    Img_Attack_Label:Label = null;  // Attack的label
+    Img_HP_node: Node = null; // HP的node
+    Img_Attack_node: Node = null; // HP的node
+    Img_HP_Label: Label = null;  // HP的label
+    Img_Attack_Label: Label = null;  // Attack的label
 
 
 
     // 初始设置位置与旋转角度
-    SetWorldPos(p1:Vec3)
-    {
+    SetWorldPos(p1: Vec3) {
         this.node.setWorldPosition(p1);
     }
-    SetLocalPos(p1:Vec3)
-    {
+    SetLocalPos(p1: Vec3) {
         this.node.setPosition(p1);
     }
-    SetAngle(ang1_deg:number)
-    {
+    SetAngle(ang1_deg: number) {
         this.fishimage_node.angle = ang1_deg;
     }
 
@@ -64,35 +61,34 @@ export class fishnode_controller extends Component {
     Launch(v1: Vec2) {
 
         // 安全检查
-        if(this.isAllowLaunch == false) // 如果不允许发射的被发射了，证明代码逻辑有错
+        if (this.cntAllowLaunch <= 0) // 如果不允许发射的被发射了，证明代码逻辑有错
         {
-            console.error("异常发射，isAllowLaunch=false")
+            console.error("异常发射，cntAllowLaunch=0")
         }
 
         // 是否允许发射，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
-        this.isAllowLaunch =false;
+        this.cntAllowLaunch--;
 
         // 设置手动发射的鱼鱼,并且在移动
         // this.isLaunchMoving = true;
         this.rigid2d.linearVelocity = v1
-        console.log("发射速度："+v1.length())
+        console.log("发射速度：" + v1.length())
     }
 
     // ---- 角速度发射
     // 角度相关变量
-    cur_ang_speed_deg:number =0;
-    dang_deg:number =0;
-    LaunchRoation()  
-    {
+    cur_ang_speed_deg: number = 0;
+    dang_deg: number = 0;
+    LaunchRoation() {
         const cur_angle = this.fishimage_node.angle
 
-        let desired_angle:number[] = [cur_angle+80, cur_angle+120,cur_angle+140]
-       let t=tween(this.fishimage_node)
-        .to(0.3, { angle: desired_angle[0] })
-        .to(0.3, { angle: desired_angle[1] })
-        .to(0.3, { angle: desired_angle[2] })
-        .repeat(1) //设置次数
-        .start()
+        let desired_angle: number[] = [cur_angle + 80, cur_angle + 120, cur_angle + 140]
+        let t = tween(this.fishimage_node)
+            .to(0.3, { angle: desired_angle[0] })
+            .to(0.3, { angle: desired_angle[1] })
+            .to(0.3, { angle: desired_angle[2] })
+            .repeat(1) //设置次数
+            .start()
     }
 
     protected onLoad(): void {
@@ -152,13 +148,13 @@ export class fishnode_controller extends Component {
         // this.ChangePartyColor(this.player_Party)
 
         // 设置一下自己的血量和攻击力
-        this.ChangeHP_withImg(0,false);
-        this.ChangeAttack_withImg(0,false);
+        this.ChangeHP_withImg(0, false);
+        this.ChangeAttack_withImg(0, false);
 
     }
 
     update(deltaTime: number) {
-            
+
 
 
         // if(this.isLaunchMoving)   //如果手动发射的鱼鱼还在移动
@@ -178,15 +174,12 @@ export class fishnode_controller extends Component {
 
 
     // 依据阵营改变颜色
-    ChangePartyColor(kk:number)
-    {
-        if(kk==0)
-        {
+    ChangePartyColor(kk: number) {
+        if (kk == 0) {
             this.fishimage_node.children[0].active = true;
             this.fishimage_node.children[1].active = false;
         }
-        else if(kk==1)
-        {
+        else if (kk == 1) {
             this.fishimage_node.children[0].active = false;
             this.fishimage_node.children[1].active = true;
         }
@@ -197,33 +190,31 @@ export class fishnode_controller extends Component {
     // 碰撞回调
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
 
-    
 
 
 
-        if(otherCollider.group == (1<<1))  // 如果被撞是玩家
+
+        if (otherCollider.group == (1 << 1))  // 如果被撞是玩家
         {
             //-------- 优先判断是自己处理，还是对面处理
             // 如果是 进攻方 vs 敌对方，那么进攻方的鱼处理
             // 如果 两个都是进攻方 ， 那么 根据ID判断大小
             // 如果两个都是敌对方，那么都不处理
 
-        
+
             let otherscript = otherCollider.getComponent(fishnode_controller);
             // 如果是 进攻方 vs 敌对方，那么进攻方的鱼处理
-            if(this.player_Party!= otherscript.player_Party)
-            {
-                 if(this.player_Party!=Master_main_scene1.Instance.CurRunningPartyID)  // 如果不是进攻方，不处理
-                 {
+            if (this.player_Party != otherscript.player_Party) {
+                if (this.player_Party != Master_main_scene1.Instance.CurRunningPartyID)  // 如果不是进攻方，不处理
+                {
                     return
-                 }
-                
-                 console.log("进攻vs防御 碰撞处理")
+                }
+
+                console.log("进攻vs防御 碰撞处理")
                 // 如果是进攻方，那么处理
 
-                 // 先判断一下是不是会死，因为死不死动画效果不一样
-                if(otherscript.player_HP - this.player_Attack > 0) 
-                {
+                // 先判断一下是不是会死，因为死不死动画效果不一样
+                if (otherscript.player_HP - this.player_Attack > 0) {
 
 
                     // 暂停物理系统 
@@ -235,10 +226,10 @@ export class fishnode_controller extends Component {
 
                     // 被撞的先转起来
                     otherscript.LaunchRoation()
-    
+
                     // 晃动镜头
-                    camera_Manager_Controller.Instance.effectShake(0.06,0.98)
-    
+                    camera_Manager_Controller.Instance.effectShake(0.06, 0.98)
+
                     // 扣血 等等操作
                     this._fish_attack(otherscript)
                 }
@@ -253,13 +244,11 @@ export class fishnode_controller extends Component {
 
                 return
             } // end 如果是 进攻方 vs 敌对方
-            else if (this.player_Party == otherscript.player_Party && this.player_Party == Master_main_scene1.Instance.CurRunningPartyID) 
-            {
+            else if (this.player_Party == otherscript.player_Party && this.player_Party == Master_main_scene1.Instance.CurRunningPartyID) {
 
                 // --- 如果 两个都是进攻方
                 // 先判断自己有没有特效，没有特效不需要处理
-                if(this.player_Type!=0 && this.player_Type!=2 )
-                {
+                if (this.player_Type != 0 && this.player_Type != 2) {
                     return;
                 }
 
@@ -274,7 +263,7 @@ export class fishnode_controller extends Component {
                 PhysicsSystem2D.instance.enable = false;
                 this.schedule(function () {
                     PhysicsSystem2D.instance.enable = true;
-                }, 0.1, 1) 
+                }, 0.1, 1)
 
                 // 播放粒子特效 未完成
 
@@ -294,8 +283,8 @@ export class fishnode_controller extends Component {
                 // 如果两个都是敌对方，那么都不处理
                 return
             }
-            
- 
+
+
 
         } // end if(otherCollider.group ==1)  // 如果被撞是玩家
 
@@ -315,70 +304,66 @@ export class fishnode_controller extends Component {
 
 
     //------------ 攻击力部分
-    _fish_attack(otherscript:fishnode_controller)
-    {
+    _fish_attack(otherscript: fishnode_controller) {
         // 未完成，其他鱼鱼类型
         otherscript.ChangeHP_withImg(-this.player_Attack)
     }
 
     //---------- 进攻vs进攻 碰撞部分
-    _fish_aux(otherscript:fishnode_controller)
-    {
+    _fish_aux(otherscript: fishnode_controller) {
         // 未完成，其他鱼鱼类型
-        if(this.player_Type ==0)  // 如果0型鱼鱼，增加对方攻击力
+        if (this.player_Type == 0)  // 如果0型鱼鱼，增加对方攻击力
         {
             otherscript.ChangeAttack_withImg(3)  // 未完成 值可能不对
         }
-        else if(this.player_Type == 2) // 如果2型鱼鱼，增加对方血量
+        else if (this.player_Type == 2) // 如果2型鱼鱼，增加对方血量
         {
             otherscript.ChangeHP_withImg(3)  // 未完成 值可能不对
         }
 
-        if(otherscript.player_Type == 0) // 如果0型鱼鱼，增加自己攻击力
+        if (otherscript.player_Type == 0) // 如果0型鱼鱼，增加自己攻击力
         {
             this.ChangeAttack_withImg(3)  // 未完成 值可能不对
         }
-        else if(otherscript.player_Type == 2) // 如果0型鱼鱼，增加自己攻击力
+        else if (otherscript.player_Type == 2) // 如果0型鱼鱼，增加自己攻击力
         {
             this.ChangeHP_withImg(3)  // 未完成 值可能不对
         }
     }
 
     // 要改变的血量，同时图片也该
-    ChangeHP_withImg(dHP:number, bOpenEffect = true)
-    {
+    ChangeHP_withImg(dHP: number, bOpenEffect = true) {
         this.player_HP += dHP
         // 变色
-        if(this.player_HP< this.player_MaxHP/3)   // 血量低，得是红色
+        if (this.player_HP < this.player_MaxHP / 3)   // 血量低，得是红色
         {
-            this.Img_HP_Label.color = new Color(231,123,123,255)
+            this.Img_HP_Label.color = new Color(231, 123, 123, 255)
         }
-        else if(this.player_HP> 2*this.player_MaxHP/3) // 血量高，就得是绿色
+        else if (this.player_HP > 2 * this.player_MaxHP / 3) // 血量高，就得是绿色
         {
-            this.Img_HP_Label.color = new Color(125,255,83,255);
+            this.Img_HP_Label.color = new Color(125, 255, 83, 255);
         }
         else  // 中等血量，用白色
         {
-            this.Img_HP_Label.color = new Color(255,255,255,255)
+            this.Img_HP_Label.color = new Color(255, 255, 255, 255)
         }
 
-        
+
         // 变大及给改变图片
         this.Img_HP_Label.string = this.player_HP.toString()
 
-        if(!bOpenEffect)  // 如果不需要特效，直接返回
+        if (!bOpenEffect)  // 如果不需要特效，直接返回
             return
 
         let t1 = tween(this.Img_HP_node)
-        .to(0.3, { scale:  new Vec3(1.6,1.6,1)})
-        .to(1, { scale:  new Vec3(1,1,1)})
-        .start()
+            .to(0.3, { scale: new Vec3(1.6, 1.6, 1) })
+            .to(1, { scale: new Vec3(1, 1, 1) })
+            .start()
 
     }
 
     // 要改变的攻击，同时图片也该
-    ChangeAttack_withImg(dAttack:number, bOpenEffect = true)
-    {
+    ChangeAttack_withImg(dAttack: number, bOpenEffect = true) {
         this.player_Attack += dAttack
 
         // 变大及给改变图片
@@ -390,9 +375,9 @@ export class fishnode_controller extends Component {
 
 
         let t1 = tween(this.Img_Attack_node)
-        .to(0.3, { scale:  new Vec3(1.6,1.6,1)})
-        .to(1, { scale:  new Vec3(1,1,1)})
-        .start()
+            .to(0.3, { scale: new Vec3(1.6, 1.6, 1) })
+            .to(1, { scale: new Vec3(1, 1, 1) })
+            .start()
 
     }
     //----- 手指蓄力部分
@@ -424,25 +409,25 @@ export class fishnode_controller extends Component {
         // 轮盘移动蓄力
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
-        let touch_worldpos = new Vec3(tx,ty,0)
+        let touch_worldpos = new Vec3(tx, ty, 0)
         UI_wheel_btn_Manager_Controller.Instance.SetSmallCirclePos(touch_worldpos)
 
         // 设置player角度
-        let tmp_ang1 = Math.atan2(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.y, UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.x) *180/ Math.PI
-        
-        this.fishimage_node.setRotationFromEuler(0,0,tmp_ang1)
+        let tmp_ang1 = Math.atan2(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.y, UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength.x) * 180 / Math.PI
+
+        this.fishimage_node.setRotationFromEuler(0, 0, tmp_ang1)
 
         // 动画蓄力  未完成
 
         // 虚拟路径规划，计算并显示  
-        UI_Aim_Line_Manager_Controller.Instance.Draw_AimLine(this.node.getWorldPosition(), 
+        UI_Aim_Line_Manager_Controller.Instance.Draw_AimLine(this.node.getWorldPosition(),
             UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength,
             this.rigid2d.linearDamping
         )
 
         // 取消按钮：判断是否进入。目的是控制是否高亮，不需要判断是否发射，发射时会判断的
         UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)
-        
+
     }
 
     // 由鱼的on消息调用
@@ -452,7 +437,7 @@ export class fishnode_controller extends Component {
 
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
-        let touch_worldpos = new Vec3(tx,ty,0)
+        let touch_worldpos = new Vec3(tx, ty, 0)
 
 
 
@@ -461,7 +446,7 @@ export class fishnode_controller extends Component {
 
         // 发射鱼鱼
         const bCancleLaunch = UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)   // 判断是否在Cancle区域内
-        if(!bCancleLaunch)  // 如果的确要发射
+        if (!bCancleLaunch)  // 如果的确要发射
             this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
         // 轮盘归位,其实不用归位
         // 轮盘消失
@@ -482,7 +467,7 @@ export class fishnode_controller extends Component {
 
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
-        let touch_worldpos = new Vec3(tx,ty,0)
+        let touch_worldpos = new Vec3(tx, ty, 0)
 
 
         // 虚拟路径关闭 
@@ -490,12 +475,12 @@ export class fishnode_controller extends Component {
 
         // 发射鱼鱼
         const bCancleLaunch = UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)   // 判断是否在Cancle区域内
-        if(!bCancleLaunch)  // 如果的确要发射
+        if (!bCancleLaunch)  // 如果的确要发射
             this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
         // 轮盘归位,其实不用归位
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
-    
+
         // 消失取消按钮
         UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
 
