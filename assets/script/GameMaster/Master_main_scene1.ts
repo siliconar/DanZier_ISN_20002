@@ -1,4 +1,4 @@
-import { _decorator, Component, director, instantiate, Node, Prefab, tween, Vec3 } from 'cc';
+import { _decorator, Component, director, instantiate, Node, Prefab, RigidBody2D, tween, Vec3 } from 'cc';
 import { UI_Curtain_Mgr } from '../UI_Control/UI_Curtain/UI_Curtain_Mgr';
 import { GlobalConstant } from '../GlobalConstant';
 import { PlayerManager_Controller } from '../FishNode/PlayerManager_Controller';
@@ -21,28 +21,27 @@ export class Master_main_scene1 extends Component {
 
     //--- 暴露变量
     @property(Prefab)
-    prefab_fish:Prefab = null;
+    prefab_fish: Prefab = null;
     // --- 内部变量
     // RunningFishTypes_List: Map<number, number[]> = new Map<number, number[]>();   // 注册所有的Tube
-    EnterPosition_Local:Map<number, Vec3[]> = new Map<number, Vec3[]>();   // 所有的入场位置
-    bAllow_Launch:boolean = false;  // 是否允许用户发射
-    GameResult:number =0;    // 游戏是否结束。0悬而未决，-1用户输了，1用户赢了
-    CurRunningPartyID:number = 0   // 当前进攻的是哪一方，0是player 1是敌人
+    EnterPosition_Local: Map<number, Vec3[]> = new Map<number, Vec3[]>();   // 所有的入场位置
+    GameResult: number = 0;    // 游戏是否结束。-1悬而未决，0用户赢了，1敌人赢了
+    CurRunningPartyID: number = 0   // 当前进攻的是哪一方，0是player 1是敌人
 
 
-    private _isUserLaunched:boolean = true;    // 是否用户已经发射了，这个用于控制阻塞，当用户发射前为false，发射后为true，让阻塞通过。
+    private _isUserLaunched: boolean = true;    // 是否用户已经发射了，这个用于控制阻塞，当用户发射前为false，发射后为true，让阻塞通过。
     private _launchResolvers: (() => void) = null; // 配合上面的
 
-    private _checkstop_Resolver:(() => void) = null; // 用于阻塞“等待所有鱼鱼停止”
+    private _checkstop_Resolver: (() => void) = null; // 用于阻塞“等待所有鱼鱼停止”
 
 
     //--= 组件
-    obj_Musk:Node = null;
-    obj_topcurtain:Node = null;   // 上幕布
-    ojb_bottomcurtain:Node = null;  // 下幕布
-    obj_draw_lots:Node = null;   // 抽签label
-    obj_Rewards:Node = null;   // 奖励label
-    obj_UI_Label_executer:Node = null;  // 谁是执行者label
+    obj_Musk: Node = null;
+    obj_topcurtain: Node = null;   // 上幕布
+    ojb_bottomcurtain: Node = null;  // 下幕布
+    obj_draw_lots: Node = null;   // 抽签label
+    obj_Rewards: Node = null;   // 奖励label
+    obj_UI_Label_executer: Node = null;  // 谁是执行者label
 
 
 
@@ -52,7 +51,7 @@ export class Master_main_scene1 extends Component {
         // 初始化变量
         // this.RunningFishTypes_List.set(0, []);
         // this.RunningFishTypes_List.set(1, []);
-    
+
         // 初始化入场位置
         this.EnterPosition_Local.set(0, []);
         this.EnterPosition_Local.set(1, []);
@@ -86,12 +85,10 @@ export class Master_main_scene1 extends Component {
 
 
     // 开始游戏流程
-    async StartGameFlow()
-    {
+    async StartGameFlow() {
 
         // 初始化变量
-        this.bAllow_Launch =false;  // 是否允许用户发射
-        this.GameResult = 0;         // 游戏是否结束。0悬而未决，-1用户输了，1用户赢了
+        this.GameResult = -1;         // 游戏是否结束。-1悬而未决，0用户赢了，1敌人赢了
 
         // 打开幕布
         await this._curtain(false);
@@ -103,19 +100,18 @@ export class Master_main_scene1 extends Component {
 
         // 播放目标，未完成
 
-        
+
         // 开始交替执行循环
-        do
-        {
+        do {
             // 播放谁是执行者
             await this.play_who_turn();
 
             // 根据执行者，设置允许用户发射标志位(isAllowLaunch)
             // let cnt_executer = 0;  // 一次小局中，执行者的数量
-            for(const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+            for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
             {
                 const i_script = i_node.getComponent(fishnode_controller);
-                if(i_script.player_Party == this.CurRunningPartyID)  // 如果的确是执行者
+                if (i_script.player_Party == this.CurRunningPartyID)  // 如果的确是执行者
                 {
                     i_script.isAllowLaunch = true;
                     // cnt_executer++;
@@ -123,7 +119,7 @@ export class Master_main_scene1 extends Component {
             }
 
             // 开始小局N次。所谓小局: 每操作一次，直到全部鱼鱼停止移动，算一个小局
-            do{
+            do {
                 // 点亮undo_circle
                 this._control_undo_circle(true);
 
@@ -147,14 +143,29 @@ export class Master_main_scene1 extends Component {
                 await this.sleep(500);
 
                 // 是否全部鱼鱼停止移动
+                await this.waitForAllFishStop()
+
+                // 肯定碰撞中，还有一些小动画，等待完毕
+                await this.sleep(2000)  // 等待2s
+
                 // 是否对方全部噶了，如果噶了，设置游戏结束标志位
+                this.GameResult = this.gameEndCheck();
+                if (-1 != this.GameResult)  // 如果分出胜负了
+                {
+                    break;
+                }
 
-                // while判断，是否执行力消耗完毕
+                // 判断，是否执行力消耗完毕
+                const isAllExecutorDone = this.allExecutorDone_Check();
 
-            }while(false)
-            
+                // 如果行动力消耗干净了，跳出，否则，继续循环
+                if (true == isAllExecutorDone)
+                    break;
+
+            } while (true)
+
             // 走到这里，说明小局结束。
-            
+
 
             // 游戏是否结束，
 
@@ -164,9 +175,9 @@ export class Master_main_scene1 extends Component {
 
             // 把遮罩打开，未完成，测试用，最后删除
             this.obj_Musk.active = true;
-        }while(false);
+        } while (false);
 
-        
+
         // 程序走到这里，说明有结局了
         // 播放结算奖励，未完成
         this.obj_Rewards.active = true;
@@ -179,10 +190,8 @@ export class Master_main_scene1 extends Component {
 
 
     // 开合幕布
-    async _curtain(isclose:boolean):Promise<void>
-    {
-        if(true == isclose)
-        {
+    async _curtain(isclose: boolean): Promise<void> {
+        if (true == isclose) {
             let t1 = tween(this.obj_topcurtain)
                 .to(0.5, { position: new Vec3(0, 0, 0) })
                 .repeat(1) //设置次数
@@ -190,10 +199,9 @@ export class Master_main_scene1 extends Component {
             let t2 = tween(this.ojb_bottomcurtain)
                 .to(0.5, { position: new Vec3(0, 0, 0) })
                 .repeat(1) //设置次数
-                .start()  
+                .start()
         }
-        else
-        {
+        else {
             let t1 = tween(this.obj_topcurtain)
                 .to(0.5, { position: new Vec3(0, 900, 0) })
                 .repeat(1) //设置次数
@@ -201,57 +209,54 @@ export class Master_main_scene1 extends Component {
             let t2 = tween(this.ojb_bottomcurtain)
                 .to(0.5, { position: new Vec3(0, -900, 0) })
                 .repeat(1) //设置次数
-                .start()  
+                .start()
         }
 
         return new Promise(
-            (resolve)=>{ 
-                    this.scheduleOnce(()=>{resolve();},0.7);
-              });
+            (resolve) => {
+                this.scheduleOnce(() => { resolve(); }, 0.7);
+            });
     }
 
     // 抽签Draw Lots
-    async _draw_Lots():Promise<void>
-    {
+    async _draw_Lots(): Promise<void> {
         const randomBit = Math.random() < 0.5 ? 0 : 1;  // 随机数
-        if(0 == randomBit)  // 我方先手
+        if (0 == randomBit)  // 我方先手
         {
-            this.obj_draw_lots.children[0].active =true;
+            this.obj_draw_lots.children[0].active = true;
             console.log("先手")
         }
         else // 如果敌方先手
         {
-            this.obj_draw_lots.children[1].active =true;
+            this.obj_draw_lots.children[1].active = true;
             console.log("后手")
         }
 
         await this.sleep(3000);  // 等待5秒
         // 关闭显示
-        this.obj_draw_lots.children[0].active =false;
-        this.obj_draw_lots.children[1].active =false;
+        this.obj_draw_lots.children[0].active = false;
+        this.obj_draw_lots.children[1].active = false;
 
         // 告诉管理器谁先手
         this.CurRunningPartyID = randomBit;
 
         console.log("抽签结束")
         return new Promise(
-            (resolve)=>{ resolve();});
+            (resolve) => { resolve(); });
 
     }
 
 
     // 双方抽出3员大将
-    async GetAllFishes_and_Register():Promise<void>
-    {
+    async GetAllFishes_and_Register(): Promise<void> {
 
 
         // 从GlobalConstant中，取出要参赛的3条鱼鱼的类型
-        let player0_type:number[] = [];   // player0所取出的3条鱼鱼类型
-        let player1_type:number[] = [];   // player1所取出的3条鱼鱼类型
-        for (let icnt = 0; icnt < 3; icnt++) 
-        {
-            player0_type.push( GlobalConstant.Instance.ApplyOneFishType(0))
-            player1_type.push( GlobalConstant.Instance.ApplyOneFishType(1))
+        let player0_type: number[] = [];   // player0所取出的3条鱼鱼类型
+        let player1_type: number[] = [];   // player1所取出的3条鱼鱼类型
+        for (let icnt = 0; icnt < 3; icnt++) {
+            player0_type.push(GlobalConstant.Instance.ApplyOneFishType(0))
+            player1_type.push(GlobalConstant.Instance.ApplyOneFishType(1))
         }
 
 
@@ -275,8 +280,7 @@ export class Master_main_scene1 extends Component {
     }
 
     // 入场一个鱼鱼
-    private async enter_1_fish(partyID:number, itype:number, localpos:Vec3, delaytm_ms:number):Promise<void>
-    {
+    private async enter_1_fish(partyID: number, itype: number, localpos: Vec3, delaytm_ms: number): Promise<void> {
 
         // 延时
         await this.sleep(delaytm_ms);
@@ -291,7 +295,7 @@ export class Master_main_scene1 extends Component {
         PlayerManager_Controller.Instance.node.addChild(newfish);
         newfish.setPosition(localpos);  // 设置位置
         newfishScript.player_Party = partyID; // 设置PartyID，注意图像得等到激活后
-        
+
         newfishScript.player_Type = itype;   // 设置类型
 
         // 播放动画，未完成
@@ -299,7 +303,7 @@ export class Master_main_scene1 extends Component {
         // 激活节点
         newfish.active = true;
         newfishScript.ChangePartyColor(partyID)  // 根据party设置图片
-        const ang1_deg = partyID==0? 90:-90;  // 角度
+        const ang1_deg = partyID == 0 ? 90 : -90;  // 角度
         newfishScript.SetAngle(ang1_deg) // 设置鱼鱼角度
         // 结束
         return new Promise(
@@ -308,15 +312,14 @@ export class Master_main_scene1 extends Component {
 
 
     //播放谁是执行者
-    private async play_who_turn():Promise<void>
-    {
+    private async play_who_turn(): Promise<void> {
         const label_bg = this.obj_UI_Label_executer.children[0];
         const label_player0 = this.obj_UI_Label_executer.children[1];
         const label_player1 = this.obj_UI_Label_executer.children[2];
 
         // 打开标签
         label_bg.active = true;   // 打开底色
-        if(this.CurRunningPartyID ==0)
+        if (this.CurRunningPartyID == 0)
             label_player0.active = true;
         else
             label_player1.active = true;
@@ -336,33 +339,95 @@ export class Master_main_scene1 extends Component {
         if (this._isUserLaunched) return;
 
         return new Promise<void>(resolve => {
-            this._launchResolvers =resolve;
+            this._launchResolvers = resolve;
         });
     }
 
 
     // 回调：用户发射后，运行此函数，让整体向下执行
-    callback_UserLaunched()
-    {
-        if(this._isUserLaunched == true)
-        {
+    callback_UserLaunched() {
+        if (this._isUserLaunched == true) {
             console.error("不可能出现这里，用户异常callback发射")
         }
 
         this._isUserLaunched = true;  // 用户已经发射
-        
+
         this._launchResolvers(); // 让刚才存储的resolve执行，唤醒主game进程
         this._launchResolvers = null;
     }
 
     // 等待所有鱼鱼停止
-    async waitForAllFishStop():Promise<void>
-    {
-        // 未完成，可能还不能这么些
-        return new Promise<void>(resolve => {
-            this._checkstop_Resolver = resolve;
-        });
+    async waitForAllFishStop(): Promise<void> {
+        while (true) {
+            await this.sleep(1000)
+
+            let isAllStoped = true;  // 我们先假设所有的都停了，然后验证
+            for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+            {
+                const i_rigid = i_node.getComponent(RigidBody2D);
+                const linearVelocity = i_rigid.linearVelocity;
+                console.log("剩余速度:" + linearVelocity.length())
+                // const angularVelocity = i_rigid.angularVelocity;
+                // 设定一个容忍范围（因为浮点数误差）
+                if (linearVelocity.length() > 0.01) {
+                    isAllStoped = false;
+                    break;  // 不需要再检测了，肯定失败
+                }
+            }
+
+            if (isAllStoped)  // 如果的确是都停了，那么结束
+            {
+                break;
+            }
+            else
+                continue;
+
+        }
+
+        return new Promise(
+            (resolve) => { resolve(); });
+
     }
+
+
+    // 是否对方全部噶了，如果噶了，设置游戏结束标志位
+    private gameEndCheck(): number {
+
+        let isExistEnemy = false;
+        for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+        {
+            const iscript = i_node.getComponent(fishnode_controller);
+            if (iscript.player_Party != this.CurRunningPartyID)   // 如果是敌人，那么说明敌人还没噶完，还有敌人
+            {
+                isExistEnemy = true;
+                break;
+            }
+        }
+
+        if (isExistEnemy)  // 如果还有敌人在场，说明悬而未决
+            return -1;
+        else  // 如果没有敌人，那就是的确结束了
+        {
+            return this.CurRunningPartyID;   // 也就是当前CurRunningPartyID的玩家赢了。
+        }
+    }
+
+
+    // 判断，是否执行力消耗完毕
+    allExecutorDone_Check(): boolean {
+        for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+        {
+            const i_script = i_node.getComponent(fishnode_controller);
+            // 如果是当前行动者,且还可以发射,说明没消耗完行动力
+            if (i_script.player_Party == this.CurRunningPartyID && i_script.isAllowLaunch == true)   // 如果是当前行动者,且还可以发射
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 
     // 休眠
     async sleep(ms: number): Promise<void> {
