@@ -5,6 +5,15 @@ import { PlayerManager_Controller } from '../FishNode/PlayerManager_Controller';
 import { fishnode_controller } from '../FishNode/fishnode_controller';
 const { ccclass, property } = _decorator;
 
+
+
+type PointEnter = {
+    fish_party: number;
+    fish_type: number;
+    localpos: Vec3;
+};
+
+
 @ccclass('Master_main_scene1')
 export class Master_main_scene1 extends Component {
 
@@ -164,7 +173,8 @@ export class Master_main_scene1 extends Component {
                 // 判断是否有阵营需要补人
                 // 如果该阵营还有备用，那就补充。
                 // 如果没有备用了，那么什么也不做。
-                await this.supply_fishes();
+                await this.supply_fishes();  // 根据外部反馈的SupplyFishCnt变量，补充鱼鱼，并直接给与发射权
+                上面这行，发射权可能给的不对
 
                 // 判断场上还有人没，没人了直接游戏结束；
 
@@ -302,7 +312,7 @@ export class Master_main_scene1 extends Component {
     }
 
     // 入场一个鱼鱼
-    private async enter_1_fish(partyID: number, itype: number, localpos: Vec3, delaytm_ms: number): Promise<void> {
+    private async enter_1_fish(partyID: number, itype: number, localpos: Vec3, delaytm_ms: number, cntAllowLaunch:number =0): Promise<void> {
 
         // 延时
         await this.sleep(delaytm_ms);
@@ -319,6 +329,7 @@ export class Master_main_scene1 extends Component {
         newfishScript.player_Party = partyID; // 设置PartyID，注意图像得等到激活后
 
         newfishScript.player_Type = itype;   // 设置类型
+        newfishScript.cntAllowLaunch = cntAllowLaunch;  // 设置允许发射次数
 
         // 播放动画，未完成
         console.log("播放入场动画")
@@ -336,35 +347,66 @@ export class Master_main_scene1 extends Component {
     // 根据外部反馈的SupplyFishCnt变量，补充鱼鱼
     private async supply_fishes(): Promise<void> {
 
-
-        type PointEnter = {
-            fish_party: number;
-            fish_type: number;
-            localpos: Vec3;
-        };
-
-        let List_PointEnter: PointEnter[] = [];
+        let List_FishEnterPoint: PointEnter[] = [];  // 鱼鱼的入场点
 
         // 判断是否有阵营需要补人
         // 如果该阵营还有备用，那就补充。
         // 如果没有备用了，那么什么也不做。
-        if (this.SupplyFishCnt[0] > 0 || this.SupplyFishCnt[1] > 0) {
+        if (this.SupplyFishCnt[0] > 0 || this.SupplyFishCnt[1] > 0)  // 判断是否有阵营需要补人
+        {
+
+            // 判断是否还有备用，把有备用的鱼，塞入List_PointEnter中，之后计算入场位置
             for (let iparty = 0; iparty < 2; iparty++)  // 把两个阵营都处理一遍
             {
                 if (this.SupplyFishCnt[iparty] == 0) // 如果这个阵营不需要补充人力
                     continue;
-                const itype = GlobalConstant.Instance.ApplyOneFishType(iparty);  // 尝试确定新鱼鱼类型
-                if (itype == -1) // 如果没有鱼鱼了，就什么都不做。-1表示备用池没有鱼鱼了
-                    continue;
 
-                // 如果备用池还有鱼鱼
-                List_PointEnter.push({ fish_party: iparty, fish_type: itype, localpos: new Vec3(1, 2, 3) })
+                // 补充N条鱼鱼，进入List_FishEnterPoint，之后确定入场位置
+                for (let ik = 0; ik < this.SupplyFishCnt[iparty]; ik++) {
+                    const itype = GlobalConstant.Instance.ApplyOneFishType(iparty);  // 尝试确定新鱼鱼类型
+                    if (itype == -1) // 如果没有鱼鱼了，就什么都不做。-1表示备用池没有鱼鱼了
+                        break;
+
+                    // 如果备用池还有鱼鱼
+                    List_FishEnterPoint.push({ fish_party: iparty, fish_type: itype, localpos: new Vec3(1, 2, 3) })
+                }
             }
 
-            // 如果List_PointEnter有值，就得统一更新localpos
-            写到这里，问gpt吧，自己写好麻烦
+            // 如果List_PointEnter有值，也就是还有鱼要入场，就得统一更新localpos
+            if(List_FishEnterPoint.length >0)
+            {
 
-        }
+                let alreadyUsedPositions: Vec3[] = [];  // 已经入场鱼鱼的位置
+                for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+                {
+                    alreadyUsedPositions.push(i_node.getPosition());
+                }
+
+                // 指定入场位置
+                this.assignPositions(List_FishEnterPoint, this.EnterPosition_Local,alreadyUsedPositions);
+            } // end if(List_FishEnterPoint.length >0)
+
+            // 入场
+            if (List_FishEnterPoint.length > 0) { 
+
+                let promises:Promise<void>[] = [];
+                for(const i_fish_pe of List_FishEnterPoint)
+                {
+                    promises.push(this.enter_1_fish(i_fish_pe.fish_party, i_fish_pe.fish_type, i_fish_pe.localpos, 0, 是否给发射权));
+                }
+                        for await (let result of promises) {
+                } // 所有鱼鱼并发入场，这样比较帅
+
+                // 播放入场动画，未完成
+                await this.sleep(1000)
+
+                console.log("补充入场完毕")
+            } // end 入场
+
+        } // end if 判断是否有阵营需要补人
+
+        return new Promise(
+            (resolve) => { resolve(); });
     }
 
 
@@ -522,7 +564,74 @@ export class Master_main_scene1 extends Component {
 
             }
         }
+    } 
+
+    // ===== 鱼鱼入场的一系列函数，比较复杂
+    fishRadius: number = 55 +1;  // 鱼鱼的碰撞半径 ， +1留点余量
+    minDistance: number = this.fishRadius * 2;
+    
+    /**
+     * 打乱数组顺序（Fisher-Yates 洗牌）
+     */
+    shuffle<T>(arr: T[]): T[] {
+        const result = [...arr];
+        for (let i = result.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result;
     }
+
+    /**
+     * 判断该位置是否与所有已入场鱼的位置冲突
+     */
+    isPositionOccupied(pos: Vec3, occupiedList: Vec3[]): boolean {
+        for (const occupied of occupiedList) {
+            const dx = pos.x - occupied.x;
+            const dy = pos.y - occupied.y;
+            const dz = pos.z - occupied.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (dist < this.minDistance) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+/**
+ * 为每条鱼分配一个随机可用的入场点（在自身阵营位置中）
+ */
+ assignPositions(
+    fishList: PointEnter[],
+    enterPositionMap: Map<number, Vec3[]>,
+    alreadyUsedPositions: Vec3[]
+) {
+    const occupied = [...alreadyUsedPositions]; // 当前已被使用的位置
+
+    for (const fish of fishList) {
+        const candidates = enterPositionMap.get(fish.fish_party); // 抽取符合阵营的备用位置
+        if (!candidates) continue;
+
+        const shuffled = this.shuffle(candidates); // 随机打乱
+
+        let found: Vec3 | null = null;
+
+        for (const pos of shuffled) {
+            if (!this.isPositionOccupied(pos, occupied)) {
+                found = pos;
+                break;
+            }
+        }
+
+        if (found) {
+            fish.localpos = found;
+            occupied.push(found);
+        } else {
+            console.warn(`未找到可用位置: party=${fish.fish_party}`);
+        }
+    }
+}
+
 
 
 }
