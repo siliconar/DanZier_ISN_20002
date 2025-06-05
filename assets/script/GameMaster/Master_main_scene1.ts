@@ -28,11 +28,12 @@ export class Master_main_scene1 extends Component {
     GameResult: number = 0;    // 游戏是否结束。-1悬而未决，0用户赢了，1敌人赢了
     CurRunningPartyID: number = 0   // 当前进攻的是哪一方，0是player 1是敌人
 
+    SupplyFishCnt: number[] = [0, 0];  // 需要补充的鱼鱼数量。由外部调用更改，撞死一个补充一个。两个值分别表示阵营0，阵营1
 
     private _isUserLaunched: boolean = true;    // 是否用户已经发射了，这个用于控制阻塞，当用户发射前为false，发射后为true，让阻塞通过。
     private _launchResolvers: (() => void) = null; // 配合上面的
 
-    private _checkstop_Resolver: (() => void) = null; // 用于阻塞“等待所有鱼鱼停止”
+
 
 
     //--= 组件
@@ -156,14 +157,21 @@ export class Master_main_scene1 extends Component {
                 // {
                 //     break;
                 // } 
-                小局如果发生游戏结束还得想想
-                中局还得想想
-                中途加入的鱼鱼怎么给行动力，还得想想。
+                // 小局如果发生游戏结束还得想想
+                // 中局还得想想
+                // 中途加入的鱼鱼怎么给行动力，还得想想。
 
-                // 判断，是否执行力消耗完毕
+                // 判断是否有阵营需要补人
+                // 如果该阵营还有备用，那就补充。
+                // 如果没有备用了，那么什么也不做。
+                await this.supply_fishes();
+
+                // 判断场上还有人没，没人了直接游戏结束；
+
+                // 判断，是否所有人的执行力消耗完毕
                 const isAllExecutorDone = this.allExecutorDone_Check();
 
-                // 如果行动力消耗干净了，跳出，否则，继续循环
+                // 如果所有人的行动力消耗干净了，跳出小局，否则，继续循环小局
                 if (true == isAllExecutorDone)
                     break;
                 else  // 如果还行行动力剩余，继续小局循环
@@ -325,6 +333,41 @@ export class Master_main_scene1 extends Component {
     }
 
 
+    // 根据外部反馈的SupplyFishCnt变量，补充鱼鱼
+    private async supply_fishes(): Promise<void> {
+
+
+        type PointEnter = {
+            fish_party: number;
+            fish_type: number;
+            localpos: Vec3;
+        };
+
+        let List_PointEnter: PointEnter[] = [];
+
+        // 判断是否有阵营需要补人
+        // 如果该阵营还有备用，那就补充。
+        // 如果没有备用了，那么什么也不做。
+        if (this.SupplyFishCnt[0] > 0 || this.SupplyFishCnt[1] > 0) {
+            for (let iparty = 0; iparty < 2; iparty++)  // 把两个阵营都处理一遍
+            {
+                if (this.SupplyFishCnt[iparty] == 0) // 如果这个阵营不需要补充人力
+                    continue;
+                const itype = GlobalConstant.Instance.ApplyOneFishType(iparty);  // 尝试确定新鱼鱼类型
+                if (itype == -1) // 如果没有鱼鱼了，就什么都不做。-1表示备用池没有鱼鱼了
+                    continue;
+
+                // 如果备用池还有鱼鱼
+                List_PointEnter.push({ fish_party: iparty, fish_type: itype, localpos: new Vec3(1, 2, 3) })
+            }
+
+            // 如果List_PointEnter有值，就得统一更新localpos
+            写到这里，问gpt吧，自己写好麻烦
+
+        }
+    }
+
+
     //播放谁是执行者
     private async play_who_turn(): Promise<void> {
         const label_bg = this.obj_UI_Label_executer.children[0];
@@ -380,7 +423,7 @@ export class Master_main_scene1 extends Component {
             {
                 const i_rigid = i_node.getComponent(RigidBody2D);
                 const linearVelocity = i_rigid.linearVelocity;
-                console.log("剩余速度:" + linearVelocity.length())
+                // console.log("剩余速度:" + linearVelocity.length())
                 // const angularVelocity = i_rigid.angularVelocity;
                 // 设定一个容忍范围（因为浮点数误差）
                 if (linearVelocity.length() > 0.01) {

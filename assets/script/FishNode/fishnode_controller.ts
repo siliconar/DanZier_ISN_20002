@@ -236,6 +236,9 @@ export class fishnode_controller extends Component {
                 else  // 如果对方是会死
                 {
                     // 未完成
+
+                    Master_main_scene1.Instance.SupplyFishCnt[otherscript.player_Party]++;  // 告诉GM，合适的时候，补充鱼鱼
+
                     director.once(Director.EVENT_AFTER_PHYSICS, () => {
                         otherCollider.node.destroy()    // 直接把子弹销毁
                     })
@@ -389,6 +392,11 @@ export class fishnode_controller extends Component {
         // 一定先把自己的虚拟碰撞体关了
         // this.fake_collider.enabled = false;
 
+
+        // 判断自己能否被点击
+        if (!this._isCanTourch())
+            return;
+
         // 激活轮盘，并移动位置
 
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(true)    // 显示轮盘
@@ -405,6 +413,11 @@ export class fishnode_controller extends Component {
     // 由鱼的on消息调用
     onTowerTouchMove(event: EventTouch) {
         // event.preventSwallow = true   //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
+
+
+        // 判断自己能否被点击
+        if (!this._isCanTourch())
+            return;
 
         // 轮盘移动蓄力
         let tx = event.getUILocation().x
@@ -434,6 +447,11 @@ export class fishnode_controller extends Component {
     onTowerTouchEnd(event: EventTouch) {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
+
+
+        // 判断自己能否被点击
+        if (!this._isCanTourch())
+            return;
 
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
@@ -465,6 +483,11 @@ export class fishnode_controller extends Component {
 
         // event.preventSwallow = true //因为塔在Line之上，消息被塔捕获了，所以一定要转发消息
 
+
+        // 判断自己能否被点击
+        if (!this._isCanTourch())
+            return;
+
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
         let touch_worldpos = new Vec3(tx, ty, 0)
@@ -490,7 +513,15 @@ export class fishnode_controller extends Component {
     }
 
 
+    // 判断自己能否被点击
+    private _isCanTourch(): boolean {
+        if (Master_main_scene1.Instance.CurRunningPartyID != this.player_Party)   // 如果不是该自己行动，那就不能点
+            return false;
+        if (this.cntAllowLaunch <= 0)  // 如果自己没有行动力，也不能点
+            return false;
 
+        return true;
+    }
 
 
 
