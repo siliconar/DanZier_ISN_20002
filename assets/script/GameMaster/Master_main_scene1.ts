@@ -10,6 +10,7 @@ const { ccclass, property } = _decorator;
 type PointEnter = {
     fish_party: number;
     fish_type: number;
+    fish_role: number;
     localpos: Vec3;
 };
 
@@ -32,12 +33,12 @@ export class Master_main_scene1 extends Component {
     @property(Prefab)
     prefab_fish: Prefab = null;
     // --- 内部变量
-    // RunningFishTypes_List: Map<number, number[]> = new Map<number, number[]>();   // 注册所有的Tube
     EnterPosition_Local: Map<number, Vec3[]> = new Map<number, Vec3[]>();   // 所有的入场位置
     GameResult: number = 0;    // 游戏是否结束。-1悬而未决，0用户赢了，1敌人赢了
     CurRunningPartyID: number = 0   // 当前进攻的是哪一方，0是player 1是敌人
 
-    SupplyFishCnt: number[] = [0, 0];  // 需要补充的鱼鱼数量。由外部调用更改，撞死一个补充一个。两个值分别表示阵营0，阵营1
+    FishCnt_byRole1: Map<number, number[]> = new Map<number, number[]>();  // 场上3个role，每一个role的鱼数量。主要用于空缺了补充鱼。
+    cntAllowLaunch_byRole3: Map<number, number[]> = new Map<number, number[]>();  // 场上3个role，每一个role可以发射的次数
 
     private _isUserLaunched: boolean = true;    // 是否用户已经发射了，这个用于控制阻塞，当用户发射前为false，发射后为true，让阻塞通过。
     private _launchResolvers: (() => void) = null; // 配合上面的
@@ -57,11 +58,6 @@ export class Master_main_scene1 extends Component {
 
     start() {
 
-
-        // 初始化变量
-        // this.RunningFishTypes_List.set(0, []);
-        // this.RunningFishTypes_List.set(1, []);
-
         // 初始化入场位置
         this.EnterPosition_Local.set(0, []);
         this.EnterPosition_Local.set(1, []);
@@ -80,6 +76,14 @@ export class Master_main_scene1 extends Component {
         this.EnterPosition_Local.get(1).push(new Vec3(-233, 460 - 100, 0)); // 后3个是备用入场地点
         this.EnterPosition_Local.get(1).push(new Vec3(0, 320 - 100, 0));        // 后3个是备用入场地点
         this.EnterPosition_Local.get(1).push(new Vec3(233, 460 - 100, 0));      // 后3个是备用入场地点
+
+        // 初始化FishCnt_byRole。场上3个role，每一个role的鱼数量。主要用于空缺了补充鱼。
+        this.FishCnt_byRole1.set(0, [0, 0, 0]);  // 两个阵营，场上都是0条鱼
+        this.FishCnt_byRole1.set(1, [0, 0, 0]); // 两个阵营，场上都是0条鱼
+
+        // 初始化cntAllowLaunch_byRole2， 场上3个role，每一个role可以发射的次数
+        this.cntAllowLaunch_byRole3.set(0, [0, 0, 0]); // 两个阵营，场上发射次数都为0
+        this.cntAllowLaunch_byRole3.set(1, [0, 0, 0]); // 两个阵营，场上发射次数都为0
 
 
         // 初始化组件
@@ -123,11 +127,15 @@ export class Master_main_scene1 extends Component {
             for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
             {
                 const i_script = i_node.getComponent(fishnode_controller);
-                i_script.cntAllowLaunch = 1;
+
+                for (const irole of i_script.roleIDs) // 很傻逼的，有些胖鱼可能有多个role，所以要遍历
+                    this.cntAllowLaunch_byRole3.get(i_script.player_Party)[irole] = 1;
             }
+
 
             // 开始小局N次。所谓小局: 每操作一次，直到全部鱼鱼停止移动，算一个小局
             do {
+
 
                 // 播放谁是执行者,"你的回合"
                 await this.play_who_turn();
@@ -138,11 +146,12 @@ export class Master_main_scene1 extends Component {
                 // 关闭遮罩，同意行动
                 this.obj_Musk.active = false;
 
-                // 设置允许用户发射标志位
+                // 设置“允许用户发射”标志位
                 this._isUserLaunched = false;   // 设置用户还未发射，然后等待
 
+
                 // 回调：用户发射后，关闭所有undo_circle；同时打开遮罩，禁止行动；设置用户已经发射标志位
-                // 等待用户发射标志位，也就是等待用户发射。发射后向下执行
+                // 等待“用户发射”标志位，也就是等待用户发射。发射后向下执行
                 await this.waitForLaunch();
 
                 // 关闭所有undo_circle；
@@ -174,7 +183,6 @@ export class Master_main_scene1 extends Component {
                 // 如果该阵营还有备用，那就补充。
                 // 如果没有备用了，那么什么也不做。
                 await this.supply_fishes();  // 根据外部反馈的SupplyFishCnt变量，补充鱼鱼，并直接给与发射权
-                上面这行，发射权可能给的不对
 
                 // 判断场上还有人没，没人了直接游戏结束；
 
@@ -295,14 +303,15 @@ export class Master_main_scene1 extends Component {
 
 
         const promises = [
-            this.enter_1_fish(0, player0_type[0], this.EnterPosition_Local.get(0)[0], 0),
-            this.enter_1_fish(0, player0_type[1], this.EnterPosition_Local.get(0)[1], 400),
-            this.enter_1_fish(0, player0_type[2], this.EnterPosition_Local.get(0)[2], 800),
-            this.enter_1_fish(1, player1_type[0], this.EnterPosition_Local.get(1)[0], 200),
-            this.enter_1_fish(1, player1_type[1], this.EnterPosition_Local.get(1)[1], 600),
-            this.enter_1_fish(1, player1_type[2], this.EnterPosition_Local.get(1)[2], 1000)];
+            this.enter_1_fish(0, player0_type[0], this.EnterPosition_Local.get(0)[0], 0, 0),
+            this.enter_1_fish(0, player0_type[1], this.EnterPosition_Local.get(0)[1], 1, 400),
+            this.enter_1_fish(0, player0_type[2], this.EnterPosition_Local.get(0)[2], 2, 800),
+            this.enter_1_fish(1, player1_type[0], this.EnterPosition_Local.get(1)[0], 0, 200),
+            this.enter_1_fish(1, player1_type[1], this.EnterPosition_Local.get(1)[1], 1, 600),
+            this.enter_1_fish(1, player1_type[2], this.EnterPosition_Local.get(1)[2], 2, 1000)];
         for await (let result of promises) {
         } // 所有鱼鱼并发入场，这样比较帅
+
 
         console.log("入场完毕")
 
@@ -312,10 +321,12 @@ export class Master_main_scene1 extends Component {
     }
 
     // 入场一个鱼鱼
-    private async enter_1_fish(partyID: number, itype: number, localpos: Vec3, delaytm_ms: number, cntAllowLaunch:number =0): Promise<void> {
+    private async enter_1_fish(partyID: number, itype: number, localpos: Vec3, roleID: number, delaytm_ms: number, cntAllowLaunch: number = 0): Promise<void> {
 
         // 延时
         await this.sleep(delaytm_ms);
+
+
 
         //---- 实例化入场
         // 实例化
@@ -329,7 +340,11 @@ export class Master_main_scene1 extends Component {
         newfishScript.player_Party = partyID; // 设置PartyID，注意图像得等到激活后
 
         newfishScript.player_Type = itype;   // 设置类型
-        newfishScript.cntAllowLaunch = cntAllowLaunch;  // 设置允许发射次数
+        newfishScript.roleIDs = [roleID];   // 场上角色
+        this.cntAllowLaunch_byRole3.get(partyID)[roleID] = cntAllowLaunch// 设置允许发射次数
+
+        // 更改GM中，场上角色数量
+        this.FishCnt_byRole1.get(partyID)[roleID]++;
 
         // 播放动画，未完成
         console.log("播放入场动画")
@@ -344,7 +359,7 @@ export class Master_main_scene1 extends Component {
     }
 
 
-    // 根据外部反馈的SupplyFishCnt变量，补充鱼鱼
+    // 根据场上鱼的数量FishCnt_byRole，补充鱼鱼
     private async supply_fishes(): Promise<void> {
 
         let List_FishEnterPoint: PointEnter[] = [];  // 鱼鱼的入场点
@@ -352,58 +367,60 @@ export class Master_main_scene1 extends Component {
         // 判断是否有阵营需要补人
         // 如果该阵营还有备用，那就补充。
         // 如果没有备用了，那么什么也不做。
-        if (this.SupplyFishCnt[0] > 0 || this.SupplyFishCnt[1] > 0)  // 判断是否有阵营需要补人
-        {
 
-            // 判断是否还有备用，把有备用的鱼，塞入List_PointEnter中，之后计算入场位置
-            for (let iparty = 0; iparty < 2; iparty++)  // 把两个阵营都处理一遍
-            {
-                if (this.SupplyFishCnt[iparty] == 0) // 如果这个阵营不需要补充人力
+
+        // 判断是否有阵营需要补人
+        for (let i_partyID = 0; i_partyID < 2; i_partyID++) {
+            for (let i_roldID = 0; i_roldID < 3; i_roldID++) {
+                // 如果还在场上，那就不需要补充
+                if (this.FishCnt_byRole1.get(i_partyID)[i_roldID] > 0)
                     continue;
 
-                // 补充N条鱼鱼，进入List_FishEnterPoint，之后确定入场位置
-                for (let ik = 0; ik < this.SupplyFishCnt[iparty]; ik++) {
-                    const itype = GlobalConstant.Instance.ApplyOneFishType(iparty);  // 尝试确定新鱼鱼类型
-                    if (itype == -1) // 如果没有鱼鱼了，就什么都不做。-1表示备用池没有鱼鱼了
-                        break;
+                // 如果需要补充
+                // 判断是否还有备用，把有备用的鱼，塞入List_PointEnter中，之后计算入场位置
+                const itype = GlobalConstant.Instance.ApplyOneFishType(i_partyID);  // 尝试确定新鱼鱼类型
+                if (itype == -1) // 如果没有鱼鱼了，就什么都不做。-1表示备用池没有鱼鱼了
+                    continue;
 
-                    // 如果备用池还有鱼鱼
-                    List_FishEnterPoint.push({ fish_party: iparty, fish_type: itype, localpos: new Vec3(1, 2, 3) })
-                }
+
+                // 如果备用池还有鱼鱼
+                List_FishEnterPoint.push({ fish_party: i_partyID, fish_type: itype, fish_role: i_roldID, localpos: new Vec3(1, 2, 3) })
+            }
+        } // end 双for  判断是否有阵营需要补人
+
+        // 如果List_PointEnter有值，也就是还有鱼要入场，就得统一更新localpos
+        if (List_FishEnterPoint.length > 0) {
+
+            let alreadyUsedPositions: Vec3[] = [];  // 已经入场鱼鱼的位置
+            for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+            {
+                alreadyUsedPositions.push(i_node.getPosition());
             }
 
-            // 如果List_PointEnter有值，也就是还有鱼要入场，就得统一更新localpos
-            if(List_FishEnterPoint.length >0)
-            {
+            // 指定入场位置
+            this.assignPositions(List_FishEnterPoint, this.EnterPosition_Local, alreadyUsedPositions);
+        } // end if(List_FishEnterPoint.length >0)
 
-                let alreadyUsedPositions: Vec3[] = [];  // 已经入场鱼鱼的位置
-                for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
-                {
-                    alreadyUsedPositions.push(i_node.getPosition());
-                }
+        // 入场
+        if (List_FishEnterPoint.length > 0) {
 
-                // 指定入场位置
-                this.assignPositions(List_FishEnterPoint, this.EnterPosition_Local,alreadyUsedPositions);
-            } // end if(List_FishEnterPoint.length >0)
+            let promises: Promise<void>[] = [];
+            for (const i_fish_pe of List_FishEnterPoint) {
+                // 这里要查看一下，原来该role的鱼鱼有没有发射权。
+                const i_cntlaunch = this.get_cntAllowLaunch(i_fish_pe.fish_party,i_fish_pe.fish_role)
+                // 入场的鱼鱼继承发射权
+                promises.push(this.enter_1_fish(i_fish_pe.fish_party, i_fish_pe.fish_type, i_fish_pe.localpos, i_fish_pe.fish_role, 0, i_cntlaunch));
+            }
+            for await (let result of promises) {
+            } // 所有鱼鱼并发入场，这样比较帅
 
-            // 入场
-            if (List_FishEnterPoint.length > 0) { 
+            // 播放入场动画，未完成
+            await this.sleep(1000)
 
-                let promises:Promise<void>[] = [];
-                for(const i_fish_pe of List_FishEnterPoint)
-                {
-                    promises.push(this.enter_1_fish(i_fish_pe.fish_party, i_fish_pe.fish_type, i_fish_pe.localpos, 0, 是否给发射权));
-                }
-                        for await (let result of promises) {
-                } // 所有鱼鱼并发入场，这样比较帅
+            console.log("补充入场完毕")
+        } // end 入场
 
-                // 播放入场动画，未完成
-                await this.sleep(1000)
 
-                console.log("补充入场完毕")
-            } // end 入场
-
-        } // end if 判断是否有阵营需要补人
 
         return new Promise(
             (resolve) => { resolve(); });
@@ -518,7 +535,7 @@ export class Master_main_scene1 extends Component {
         {
             const i_script = i_node.getComponent(fishnode_controller);
             // 如果还可以发射,说明没消耗完行动力
-            if (i_script.cntAllowLaunch > 0)   // 如果还可以发射
+            if(this.get_cntAllowLaunch(i_script.player_Party, i_script.roleIDs[0])>0)// 如果还可以发射
             {
                 return false;
             }
@@ -549,7 +566,7 @@ export class Master_main_scene1 extends Component {
 
                 if (bopen)  // 如果是要打开undo_circle
                 {
-                    if (i_script.player_Party == this.CurRunningPartyID && i_script.cntAllowLaunch > 0)  // 如果的确是执行者,且可发射
+                    if (i_script.player_Party == this.CurRunningPartyID && this.get_cntAllowLaunch(i_script.player_Party, i_script.roleIDs[0]) > 0)  // 如果的确是执行者,且可发射
                     {
                         i_script.Img_undocircle.active = true;  // 正式点亮undo_circle
                     }
@@ -564,12 +581,19 @@ export class Master_main_scene1 extends Component {
 
             }
         }
-    } 
+    }
+
+
+    // 剩余发射次数查询
+    get_cntAllowLaunch(j_partyID:number, j_roldID:number):number
+    {
+        return this.cntAllowLaunch_byRole3.get(j_partyID)[j_roldID];
+    }
 
     // ===== 鱼鱼入场的一系列函数，比较复杂
-    fishRadius: number = 55 +1;  // 鱼鱼的碰撞半径 ， +1留点余量
+    fishRadius: number = 55 + 1;  // 鱼鱼的碰撞半径 ， +1留点余量
     minDistance: number = this.fishRadius * 2;
-    
+
     /**
      * 打乱数组顺序（Fisher-Yates 洗牌）
      */
@@ -598,39 +622,39 @@ export class Master_main_scene1 extends Component {
         return false;
     }
 
-/**
- * 为每条鱼分配一个随机可用的入场点（在自身阵营位置中）
- */
- assignPositions(
-    fishList: PointEnter[],
-    enterPositionMap: Map<number, Vec3[]>,
-    alreadyUsedPositions: Vec3[]
-) {
-    const occupied = [...alreadyUsedPositions]; // 当前已被使用的位置
+    /**
+     * 为每条鱼分配一个随机可用的入场点（在自身阵营位置中）
+     */
+    assignPositions(
+        fishList: PointEnter[],
+        enterPositionMap: Map<number, Vec3[]>,
+        alreadyUsedPositions: Vec3[]
+    ) {
+        const occupied = [...alreadyUsedPositions]; // 当前已被使用的位置
 
-    for (const fish of fishList) {
-        const candidates = enterPositionMap.get(fish.fish_party); // 抽取符合阵营的备用位置
-        if (!candidates) continue;
+        for (const fish of fishList) {
+            const candidates = enterPositionMap.get(fish.fish_party); // 抽取符合阵营的备用位置
+            if (!candidates) continue;
 
-        const shuffled = this.shuffle(candidates); // 随机打乱
+            const shuffled = this.shuffle(candidates); // 随机打乱
 
-        let found: Vec3 | null = null;
+            let found: Vec3 | null = null;
 
-        for (const pos of shuffled) {
-            if (!this.isPositionOccupied(pos, occupied)) {
-                found = pos;
-                break;
+            for (const pos of shuffled) {
+                if (!this.isPositionOccupied(pos, occupied)) {
+                    found = pos;
+                    break;
+                }
+            }
+
+            if (found) {
+                fish.localpos = found;
+                occupied.push(found);
+            } else {
+                console.warn(`未找到可用位置: party=${fish.fish_party}`);
             }
         }
-
-        if (found) {
-            fish.localpos = found;
-            occupied.push(found);
-        } else {
-            console.warn(`未找到可用位置: party=${fish.fish_party}`);
-        }
     }
-}
 
 
 

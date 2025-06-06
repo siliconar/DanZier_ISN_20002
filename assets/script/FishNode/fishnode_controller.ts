@@ -28,7 +28,8 @@ export class fishnode_controller extends Component {
 
     // 内部变量
     // isLaunchMoving:boolean = false;   // 这个变量代表：1 是否是玩家手动发射鱼，2. 这个鱼是否在移动
-    cntAllowLaunch: number = 0;   // 允许发射次数，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
+    // cntAllowLaunch: number = 0;   // 允许发射次数，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
+    roleIDs:number[] = [];    // 目前位于场上哪个角色，由GM指定。为什么是数组？因为有些胖鱼可能占据3个角色。
 
     //---- 组件
     rigid2d: RigidBody2D = null;
@@ -61,16 +62,18 @@ export class fishnode_controller extends Component {
     Launch(v1: Vec2) {
 
         // 安全检查
-        if (this.cntAllowLaunch <= 0) // 如果不允许发射的被发射了，证明代码逻辑有错
+        if (Master_main_scene1.Instance.get_cntAllowLaunch(this.player_Party,this.roleIDs[0]) <= 0) // 如果不允许发射的被发射了，证明代码逻辑有错
         {
             console.error("异常发射，cntAllowLaunch=0")
         }
 
-        // 是否允许发射，也就是等待发射。这个变量最主要的作用是在点亮undo_circle的时候，判断谁执行过了。
-        this.cntAllowLaunch--;
+        // 告诉GM，我已经发射过了。
+        for(const irole of this.roleIDs)
+        {
+            Master_main_scene1.Instance.cntAllowLaunch_byRole3.get(this.player_Party)[irole] =0;
+        }
 
         // 设置手动发射的鱼鱼,并且在移动
-        // this.isLaunchMoving = true;
         this.rigid2d.linearVelocity = v1
         console.log("发射速度：" + v1.length())
     }
@@ -236,8 +239,8 @@ export class fishnode_controller extends Component {
                 else  // 如果对方是会死
                 {
                     // 未完成
-
-                    Master_main_scene1.Instance.SupplyFishCnt[otherscript.player_Party]++;  // 告诉GM，合适的时候，补充鱼鱼
+                    for(const i_roldID of otherscript.roleIDs)
+                        Master_main_scene1.Instance.FishCnt_byRole1.get(otherscript.player_Party)[i_roldID] --; // 告诉GM，合适的时候，补充鱼鱼
 
                     director.once(Director.EVENT_AFTER_PHYSICS, () => {
                         otherCollider.node.destroy()    // 直接把子弹销毁
@@ -517,7 +520,7 @@ export class fishnode_controller extends Component {
     private _isCanTourch(): boolean {
         if (Master_main_scene1.Instance.CurRunningPartyID != this.player_Party)   // 如果不是该自己行动，那就不能点
             return false;
-        if (this.cntAllowLaunch <= 0)  // 如果自己没有行动力，也不能点
+         if (Master_main_scene1.Instance.get_cntAllowLaunch(this.player_Party,this.roleIDs[0])<= 0)  // 如果自己没有行动力，也不能点
             return false;
 
         return true;
