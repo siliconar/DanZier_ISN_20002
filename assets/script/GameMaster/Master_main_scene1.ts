@@ -3,6 +3,7 @@ import { UI_Curtain_Mgr } from '../UI_Control/UI_Curtain/UI_Curtain_Mgr';
 import { GlobalConstant } from '../GlobalConstant';
 import { PlayerManager_Controller } from '../FishNode/PlayerManager_Controller';
 import { fishnode_controller } from '../FishNode/fishnode_controller';
+import { UI_Score_Controller } from './Matesr_scene_UI/UI_Score_Controller';
 const { ccclass, property } = _decorator;
 
 
@@ -44,7 +45,7 @@ export class Master_main_scene1 extends Component {
     private _isUserLaunched: boolean = true;    // 是否用户已经发射了，这个用于控制阻塞，当用户发射前为false，发射后为true，让阻塞通过。
     private _launchResolvers: (() => void) = null; // 配合上面的
 
-
+ 
 
 
     //--= 组件
@@ -94,6 +95,11 @@ export class Master_main_scene1 extends Component {
         this.obj_draw_lots = this.node.children[2];   // 抽签label
         this.obj_Rewards = this.node.children[3];   // 奖励label
         this.obj_UI_Label_executer = this.node.children[4]; // 谁是执行者label
+
+
+        // UI初始化
+        this._UI_Init();
+
         // 最后一步，异步开始游戏流程
         this.StartGameFlow();
     }
@@ -170,6 +176,10 @@ export class Master_main_scene1 extends Component {
                 // 肯定碰撞中，还有一些小动画，等待完毕
                 await this.sleep(1000)  // 等待1s
  
+                // 拉出横幅，展示比分
+                未完成，得有死亡了才播放横幅
+                await this.script_UI_Score.ShowBigScoreBanner(this.ScoreList[0], this.ScoreList[1])
+
                 // 小局如果发生游戏结束还得想想
                 // 中局还得想想
                 // 中途加入的鱼鱼怎么给行动力，还得想想。
@@ -187,6 +197,7 @@ export class Master_main_scene1 extends Component {
                 // 判断，是否所有人的执行力消耗完毕
                 const sumAllowLuach = this.get_SumAllowLunch();
                 // 如果所有人的行动力消耗干净了，跳出小局，否则，继续循环小局
+                console.log(this.cntAllowLaunch_byRole3)
                 if (sumAllowLuach[0]+sumAllowLuach[1]<=0)
                     break;
 
@@ -219,11 +230,12 @@ export class Master_main_scene1 extends Component {
                 this.xianshou_byXiaoJu = 0;
                 this.CurRunningPartyID = 0;
             }
-            // 双方发放肉鸽卡牌
+            // 双方发放肉鸽卡牌 未完成
 
             // 播放“交换先手动画”
             await this.play_who_turn(100)
             //跳回到第一步
+            continue;
 
             // 把遮罩打开，未完成，测试用，最后删除
             // this.obj_Musk.active = true;
@@ -391,8 +403,13 @@ export class Master_main_scene1 extends Component {
                 // 如果需要补充
                 // 判断是否还有备用，把有备用的鱼，塞入List_PointEnter中，之后计算入场位置
                 const itype = GlobalConstant.Instance.ApplyOneFishType(i_partyID);  // 尝试确定新鱼鱼类型
-                if (itype == -1) // 如果没有鱼鱼了，就什么都不做。-1表示备用池没有鱼鱼了
+                if (itype == -1) // 如果没有鱼鱼了，就什么都不做。-1表示备用池没有鱼鱼了。
+                {
+                    // 记住这里，一定要把原来role鱼鱼的行动力清零。
+                    // 因为这个role的鱼鱼没了，我们试图补充，但是没有，那么就把这个role的鱼鱼行动力清零
+                    this.cntAllowLaunch_byRole3.get(i_partyID)[i_roldID]=0;
                     continue;
+                }
 
 
                 // 如果备用池还有鱼鱼
@@ -673,6 +690,16 @@ export class Master_main_scene1 extends Component {
     }
 
 
+    //============== UI 控制部分
+    ScoreList:number[] = [0,0]  // 分数
+    script_UI_Score:UI_Score_Controller = null; ;
+
+
+    _UI_Init() {
+        // 分数
+        this.ScoreList = [0,0]  // 分数
+        this.script_UI_Score = this.node.children[5].getComponent(UI_Score_Controller);
+    }
 
 }
 

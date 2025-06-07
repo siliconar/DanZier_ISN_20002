@@ -246,6 +246,9 @@ export class fishnode_controller extends Component {
                         otherCollider.node.destroy()    // 直接把子弹销毁
                     })
 
+                    // 自己得分增加
+                    Master_main_scene1.Instance.ScoreList[this.player_Party] ++;
+
                 }
 
                 return
