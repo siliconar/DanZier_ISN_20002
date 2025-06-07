@@ -468,7 +468,12 @@ export class fishnode_controller extends Component {
         // 发射鱼鱼
         const bCancleLaunch = UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)   // 判断是否在Cancle区域内
         if (!bCancleLaunch)  // 如果的确要发射
+        {
             this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
+
+            // 告诉游戏导演，已经发射
+            Master_main_scene1.Instance.callback_UserLaunched();
+        }
         // 轮盘归位,其实不用归位
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
@@ -476,8 +481,7 @@ export class fishnode_controller extends Component {
         // 消失取消按钮
         UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
 
-        // 告诉游戏导演，已经发射
-        Master_main_scene1.Instance.callback_UserLaunched();
+
 
     }
 
@@ -502,16 +506,18 @@ export class fishnode_controller extends Component {
         // 发射鱼鱼
         const bCancleLaunch = UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)   // 判断是否在Cancle区域内
         if (!bCancleLaunch)  // 如果的确要发射
+        {
             this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
+
+            // 告诉游戏导演，已经发射
+            Master_main_scene1.Instance.callback_UserLaunched();
+        }
         // 轮盘归位,其实不用归位
         // 轮盘消失
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
 
         // 消失取消按钮
         UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
-
-        // 告诉游戏导演，已经发射
-        Master_main_scene1.Instance.callback_UserLaunched();
 
     }
 

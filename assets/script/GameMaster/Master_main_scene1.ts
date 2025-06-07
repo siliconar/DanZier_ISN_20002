@@ -35,7 +35,8 @@ export class Master_main_scene1 extends Component {
     // --- 内部变量
     EnterPosition_Local: Map<number, Vec3[]> = new Map<number, Vec3[]>();   // 所有的入场位置
     GameResult: number = 0;    // 游戏是否结束。-1悬而未决，0用户赢了，1敌人赢了
-    CurRunningPartyID: number = 0   // 当前进攻的是哪一方，0是player 1是敌人
+    CurRunningPartyID: number = -1   // 当前进攻的是哪一方，0是player 1是敌人
+    xianshou_byXiaoJu:number = -1;  // 小局谁先手。0是player 1是敌人。主要用于中局切换小局时，判断谁先手。
 
     FishCnt_byRole1: Map<number, number[]> = new Map<number, number[]>();  // 场上3个role，每一个role的鱼数量。主要用于空缺了补充鱼。
     cntAllowLaunch_byRole3: Map<number, number[]> = new Map<number, number[]>();  // 场上3个role，每一个role可以发射的次数
@@ -138,7 +139,7 @@ export class Master_main_scene1 extends Component {
 
 
                 // 播放谁是执行者,"你的回合"
-                await this.play_who_turn();
+                await this.play_who_turn(this.CurRunningPartyID);
 
                 // 点亮undo_circle
                 this._control_undo_circle(true);
@@ -168,13 +169,7 @@ export class Master_main_scene1 extends Component {
 
                 // 肯定碰撞中，还有一些小动画，等待完毕
                 await this.sleep(1000)  // 等待1s
-
-                // 是否对方全部噶了，如果噶了，设置游戏结束标志位
-                // this.GameResult = this.gameEndCheck();
-                // if (-1 != this.GameResult)  // 如果分出胜负了
-                // {
-                //     break;
-                // } 
+ 
                 // 小局如果发生游戏结束还得想想
                 // 中局还得想想
                 // 中途加入的鱼鱼怎么给行动力，还得想想。
@@ -185,37 +180,54 @@ export class Master_main_scene1 extends Component {
                 await this.supply_fishes();  // 根据外部反馈的SupplyFishCnt变量，补充鱼鱼，并直接给与发射权
 
                 // 判断场上还有人没，没人了直接游戏结束；
+                this.GameResult = this.gameEndCheck()
+                if(this.GameResult!=-1)   // 如果游戏不是悬而未决转台
+                    break;
 
                 // 判断，是否所有人的执行力消耗完毕
-                const isAllExecutorDone = this.allExecutorDone_Check();
-
+                const sumAllowLuach = this.get_SumAllowLunch();
                 // 如果所有人的行动力消耗干净了，跳出小局，否则，继续循环小局
-                if (true == isAllExecutorDone)
+                if (sumAllowLuach[0]+sumAllowLuach[1]<=0)
                     break;
-                else  // 如果还行行动力剩余，继续小局循环
+
+                //-- 如果还有行动力剩余，则考虑下一步用户是谁
+                // 如果对方还有行动力，就改变先手，否则，继续自己这一边            
+                this.switch_CurRunningPartyID();  // 改变先手,切到对方
+                if (sumAllowLuach[this.CurRunningPartyID] <= 0) // 如果对方没有行动力了，切回来
                 {
-                    // 改变先手
-                    this.switch_CurRunningPartyID();
-                    continue;
+                    this.switch_CurRunningPartyID();  // 切回自己先手
+                    console.warn("对方异常没有行动力，切回来，请检查入场")
                 }
+
 
             } while (true)
 
-            // 走到这里，说明小局结束。
-
-
+            //-- 走到这里，说明小局结束。
             // 游戏是否结束，
+            if(this.GameResult!=-1)  // 如果游戏不是悬而未决状态
+            {
+                break;  // 游戏结束
+            }
 
-            // 走到这里，说明游戏未结束
-            // 切换用户，跳回到第一步
-
-            // 双方发放奖励卡牌
+            //-- 走到这里，说明游戏未结束
+            // 切换用户
+            if (this.xianshou_byXiaoJu == 0) {
+                this.xianshou_byXiaoJu = 1;
+                this.CurRunningPartyID = 1;
+            }
+            else {
+                this.xianshou_byXiaoJu = 0;
+                this.CurRunningPartyID = 0;
+            }
+            // 双方发放肉鸽卡牌
 
             // 播放“交换先手动画”
+            await this.play_who_turn(100)
+            //跳回到第一步
 
             // 把遮罩打开，未完成，测试用，最后删除
-            this.obj_Musk.active = true;
-        } while (false);
+            // this.obj_Musk.active = true;
+        } while (true);
 
 
         // 程序走到这里，说明有结局了
@@ -279,7 +291,7 @@ export class Master_main_scene1 extends Component {
 
         // 告诉管理器谁先手
         this.CurRunningPartyID = randomBit;
-
+        this.xianshou_byXiaoJu = randomBit;
         console.log("抽签结束")
         return new Promise(
             (resolve) => { resolve(); });
@@ -428,17 +440,19 @@ export class Master_main_scene1 extends Component {
 
 
     //播放谁是执行者
-    private async play_who_turn(): Promise<void> {
+    private async play_who_turn(id_play:number): Promise<void> {
         const label_bg = this.obj_UI_Label_executer.children[0];
         const label_player0 = this.obj_UI_Label_executer.children[1];
         const label_player1 = this.obj_UI_Label_executer.children[2];
-
+        const player_switch = this.obj_UI_Label_executer.children[3];   // 交换先手
         // 打开标签
         label_bg.active = true;   // 打开底色
-        if (this.CurRunningPartyID == 0)
+        if (id_play == 0)
             label_player0.active = true;
-        else
+        else if(id_play == 1)
             label_player1.active = true;
+        else if(id_play == 100)
+            player_switch.active = true;  // 交换先手
 
         // 等待2秒
         await this.sleep(2000);
@@ -446,6 +460,7 @@ export class Master_main_scene1 extends Component {
         label_bg.active = false;
         label_player0.active = false;
         label_player1.active = false;
+        player_switch.active = false;
         return new Promise(
             (resolve) => { resolve(); });
     }
@@ -530,18 +545,19 @@ export class Master_main_scene1 extends Component {
 
 
     // 判断，是否执行力消耗完毕
-    allExecutorDone_Check(): boolean {
-        for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+    get_SumAllowLunch():number[]
+    {
+        let sum0:number=0;
+        let sum1:number=0;
+
+        for(let irole=0;irole<3;irole++)
         {
-            const i_script = i_node.getComponent(fishnode_controller);
-            // 如果还可以发射,说明没消耗完行动力
-            if(this.get_cntAllowLaunch(i_script.player_Party, i_script.roleIDs[0])>0)// 如果还可以发射
-            {
-                return false;
-            }
+            sum0 += this.cntAllowLaunch_byRole3.get(0)[irole];
+            sum1 += this.cntAllowLaunch_byRole3.get(1)[irole];
         }
-        return true;
+        return [sum0,sum1];
     }
+
 
     // 切换先手变量，只有变量无动画
     private switch_CurRunningPartyID() {
