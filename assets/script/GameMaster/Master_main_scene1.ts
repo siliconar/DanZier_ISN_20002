@@ -4,6 +4,7 @@ import { GlobalConstant } from '../GlobalConstant';
 import { PlayerManager_Controller } from '../FishNode/PlayerManager_Controller';
 import { fishnode_controller } from '../FishNode/fishnode_controller';
 import { UI_Score_Controller } from './Matesr_scene_UI/UI_Score_Controller';
+import { UI_ShowTurn_Controller } from './Matesr_scene_UI/UI_ShowTurn_Controller';
 const { ccclass, property } = _decorator;
 
 
@@ -125,10 +126,14 @@ export class Master_main_scene1 extends Component {
         // 小局循环。小局：一方操作一次，直到所有鱼鱼停止移动，算一个小局。N次小局后，双方把自己的行动力都消耗完了跳出。
         // 中局循环。中局：双方把自己的行动力都消耗完了，算一次中局。之后重新发奖励卡牌，交换先手，继续。直到一方所有鱼鱼都噶了结束。
 
+        // 初始化第几轮编号,其实轮就是第几次中局
+        this.TurnID = 0;
 
         // 开始中局循环。
         do {
-
+            // 第几轮编号,其实轮就是第几次中局
+            this.TurnID++;
+            this.script_UI_Turn.ChangeTurnID(this.TurnID);
 
             // 设置允许用户发射标志位(cntAllowLaunch)，敌我双方都被发了标志位。
             for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
@@ -156,6 +161,8 @@ export class Master_main_scene1 extends Component {
                 // 设置“允许用户发射”标志位
                 this._isUserLaunched = false;   // 设置用户还未发射，然后等待
 
+                // 是否有人死了，重置
+                this.isSomeOneDead = false
 
                 // 回调：用户发射后，关闭所有undo_circle；同时打开遮罩，禁止行动；设置用户已经发射标志位
                 // 等待“用户发射”标志位，也就是等待用户发射。发射后向下执行
@@ -177,8 +184,8 @@ export class Master_main_scene1 extends Component {
                 await this.sleep(1000)  // 等待1s
  
                 // 拉出横幅，展示比分
-                未完成，得有死亡了才播放横幅
-                await this.script_UI_Score.ShowBigScoreBanner(this.ScoreList[0], this.ScoreList[1])
+                if(this.isSomeOneDead)
+                    await this.script_UI_Score.ShowBigScoreBanner(this.ScoreList[0], this.ScoreList[1])
 
                 // 小局如果发生游戏结束还得想想
                 // 中局还得想想
@@ -197,7 +204,6 @@ export class Master_main_scene1 extends Component {
                 // 判断，是否所有人的执行力消耗完毕
                 const sumAllowLuach = this.get_SumAllowLunch();
                 // 如果所有人的行动力消耗干净了，跳出小局，否则，继续循环小局
-                console.log(this.cntAllowLaunch_byRole3)
                 if (sumAllowLuach[0]+sumAllowLuach[1]<=0)
                     break;
 
@@ -691,14 +697,20 @@ export class Master_main_scene1 extends Component {
 
 
     //============== UI 控制部分
-    ScoreList:number[] = [0,0]  // 分数
+    ScoreList:number[] = [0,0]  // 分数，是几:几的分数
     script_UI_Score:UI_Score_Controller = null; ;
+    isSomeOneDead:boolean;   // 是否有人死了，主要是为了拉横幅展示比分
 
+    TurnID:number = 0;   // 第几轮编号,其实轮就是第几次中局
+    script_UI_Turn:UI_ShowTurn_Controller = null;
 
     _UI_Init() {
-        // 分数
+        // 分数，是几:几的分数
         this.ScoreList = [0,0]  // 分数
         this.script_UI_Score = this.node.children[5].getComponent(UI_Score_Controller);
+        // 第几轮编号,其实轮就是第几次中局
+        this.script_UI_Turn = this.node.children[6].getComponent(UI_ShowTurn_Controller);
+
     }
 
 }

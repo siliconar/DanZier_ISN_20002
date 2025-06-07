@@ -248,6 +248,7 @@ export class fishnode_controller extends Component {
 
                     // 自己得分增加
                     Master_main_scene1.Instance.ScoreList[this.player_Party] ++;
+                    Master_main_scene1.Instance.isSomeOneDead = true;  // 的确有人死了，小局结束要拉横幅，显示比分。
 
                 }
 

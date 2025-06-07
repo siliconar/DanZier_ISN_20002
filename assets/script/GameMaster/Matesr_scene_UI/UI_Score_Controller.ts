@@ -49,13 +49,13 @@ export class UI_Score_Controller extends Component {
         this.ChangeTopBanner(1, Score1)
         // 变大
         let t1 = tween(label_score0)
-            .to(0.5, { fontSize: 90 })
+            .to(0.5, { fontSize: 100 })
             .to(1, { fontSize: 80 })
             .repeat(1) //设置次数
             .start()
 
         let t2 = tween(label_score1)
-            .to(0.5, { fontSize: 90 })
+            .to(0.5, { fontSize: 100 })
             .to(1, { fontSize: 80 })
             .repeat(1) //设置次数
             .start()
