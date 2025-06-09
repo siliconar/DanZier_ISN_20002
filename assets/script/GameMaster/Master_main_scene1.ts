@@ -5,6 +5,7 @@ import { PlayerManager_Controller } from '../FishNode/PlayerManager_Controller';
 import { fishnode_controller } from '../FishNode/fishnode_controller';
 import { UI_Score_Controller } from './Matesr_scene_UI/UI_Score_Controller';
 import { UI_ShowTurn_Controller } from './Matesr_scene_UI/UI_ShowTurn_Controller';
+import { UI_ShowTime_Controller } from './Matesr_scene_UI/UI_ShowTime_Controller';
 const { ccclass, property } = _decorator;
 
 
@@ -158,10 +159,16 @@ export class Master_main_scene1 extends Component {
                 // 关闭遮罩，同意行动
                 this.obj_Musk.active = false;
 
+                // 显示倒计时
+                this.obj_ShowTime_banner.active = true;   // 开启显示倒计时
+                this.script_UI_ShowTime.ResetTime(this.CurRunningPartyID);
+                this.obj_ShowDamage_banner.active = false; // 隐藏显示伤害
+                this.TotoalDamage_inTurn = 0;   // 伤害统计做好准备
+
                 // 设置“允许用户发射”标志位
                 this._isUserLaunched = false;   // 设置用户还未发射，然后等待
 
-                // 是否有人死了，重置
+                // 是否有人死了，重置变量
                 this.isSomeOneDead = false
 
                 // 回调：用户发射后，关闭所有undo_circle；同时打开遮罩，禁止行动；设置用户已经发射标志位
@@ -171,14 +178,31 @@ export class Master_main_scene1 extends Component {
                 // 关闭所有undo_circle；
                 this._control_undo_circle(false);
 
-
                 // 同时打开遮罩，禁止行动；
                 this.obj_Musk.active = true;
+
+
+                // 关闭倒计时，显示伤害
+                this.obj_ShowTime_banner.active = false;   // 开启显示倒计时
+                this.obj_ShowTime_banner.getComponent(UI_ShowTime_Controller).StopTime();
+                this.obj_ShowDamage_banner.active = true; // 隐藏显示伤害
+                // this.TotoalDamage_inTurn = 0;   // 伤害统计做好准备
+
+
                 // 等待一下，防止还没有发射出去
                 await this.sleep(500);
 
                 // 是否全部鱼鱼停止移动
                 await this.waitForAllFishStop()
+
+
+                // 如果是用户时间到了，直接判负
+                if(this.script_UI_ShowTime.bTimeisAlarm == true)
+                 {
+                    this.GameResult = 1;
+                    break;
+                 }
+
 
                 // 肯定碰撞中，还有一些小动画，等待完毕
                 await this.sleep(1000)  // 等待1s
@@ -510,6 +534,18 @@ export class Master_main_scene1 extends Component {
         this._launchResolvers = null;
     }
 
+
+    // 回调: 用户时间截至还未发射，运行此函数
+    // 随便找一个鱼鱼，假装正常发射了
+    // 【然后直接给丫判负了】
+    // callback_TimeOutLunch()
+    // {
+    //      for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
+    //      {
+    //         if(i_node==0)
+    //      }
+    // }
+
     // 等待所有鱼鱼停止
     async waitForAllFishStop(): Promise<void> {
         while (true) {
@@ -545,7 +581,7 @@ export class Master_main_scene1 extends Component {
 
 
     // 是否对方全部噶了，如果噶了，设置游戏结束标志位
-    private gameEndCheck(): number {
+    private gameEndCheck(bLoose:boolean = false): number {
 
         let isExistEnemy = false;
         for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
@@ -704,12 +740,25 @@ export class Master_main_scene1 extends Component {
     TurnID:number = 0;   // 第几轮编号,其实轮就是第几次中局
     script_UI_Turn:UI_ShowTurn_Controller = null;
 
+    // 显示倒计时
+    obj_ShowTime_banner:Node = null;  // 显示倒计时
+    script_UI_ShowTime:UI_ShowTime_Controller = null;
+     // 显示总伤害
+     TotoalDamage_inTurn:number=0;  // 一个小局中的总伤害
+    obj_ShowDamage_banner:Node=null;   // 显示总伤害
+
     _UI_Init() {
         // 分数，是几:几的分数
         this.ScoreList = [0,0]  // 分数
         this.script_UI_Score = this.node.children[5].getComponent(UI_Score_Controller);
         // 第几轮编号,其实轮就是第几次中局
         this.script_UI_Turn = this.node.children[6].getComponent(UI_ShowTurn_Controller);
+
+    // 显示倒计时
+    this.obj_ShowTime_banner = this.node.children[7];  // 显示倒计时
+    this.script_UI_ShowTime = this.obj_ShowTime_banner.getComponent(UI_ShowTime_Controller)
+     // 显示总伤害
+    this.obj_ShowDamage_banner=this.node.children[8];   // 显示总伤害
 
     }
 
