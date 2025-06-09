@@ -836,7 +836,7 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": -71
+      "y": -81
     },
     "_size": {
       "__type__": "cc.Size",
@@ -1038,7 +1038,7 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 71
+      "y": 81
     },
     "_size": {
       "__type__": "cc.Size",
@@ -1240,7 +1240,7 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": -71
+      "y": -81
     },
     "_size": {
       "__type__": "cc.Size",
@@ -1442,7 +1442,7 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 71
+      "y": 81
     },
     "_size": {
       "__type__": "cc.Size",
@@ -1472,8 +1472,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -102.915,
-      "y": 774.394,
+      "x": -195.49,
+      "y": 866.171,
       "z": 0
     },
     "_lrot": {
@@ -1511,7 +1511,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 432.294921875,
+      "width": 560.009765625,
       "height": 90.39999999999999
     },
     "_anchorPoint": {
@@ -1541,7 +1541,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "调节fish大小或者scale，记得一定调节FakeCollid\ner大小; 碰撞球大小; 入场时碰撞距离测算；",
+    "_string": "调节fish大小或者scale，记得一定调节FakeCollid\ner大小; 碰撞球大小（虚拟的碰撞白球）; 入场时碰撞距离测算；",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -3298,8 +3298,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 0.8,
-      "y": 0.8,
+      "x": 1,
+      "y": 1,
       "z": 1
     },
     "_mobility": 0,
@@ -3407,8 +3407,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 0.8,
-      "y": 0.8,
+      "x": 1,
+      "y": 1,
       "z": 1
     },
     "_mobility": 0,
@@ -3516,8 +3516,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 0.8,
-      "y": 0.8,
+      "x": 1,
+      "y": 1,
       "z": 1
     },
     "_mobility": 0,
@@ -10376,7 +10376,7 @@
     "_enabled": true,
     "__prefab": null,
     "prefab_fish": {
-      "__uuid__": "cf767f49-4d57-47a4-bac3-7f49fec62edb",
+      "__uuid__": "2854fe4b-7d78-4f4a-8dd5-cde8ab6c5125",
       "__expectedType__": "cc.Prefab"
     },
     "_id": "c017pokXVCl5dWKiB75ATt"

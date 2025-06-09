@@ -666,7 +666,7 @@ export class Master_main_scene1 extends Component {
     }
 
     // ===== 鱼鱼入场的一系列函数，比较复杂
-    fishRadius: number = 55 + 1;  // 鱼鱼的碰撞半径 ， +1留点余量
+    fishRadius: number = 55 + 3;  // 鱼鱼的碰撞半径 ， +3留点余量
     minDistance: number = this.fishRadius * 2;
 
     /**

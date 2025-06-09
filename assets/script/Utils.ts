@@ -67,34 +67,7 @@ export class Utils  {
 
 
 
-    static computeP3(p1: Vec3, p2: Vec3, stopDistance: number = 55*0.8): Vec3 {
-        const dir = {
-          x: p2.x - p1.x,
-          y: p2.y - p1.y,
-          z: p2.z - p1.z
-        };
-      
-        const length = Math.sqrt(dir.x ** 2 + dir.y ** 2 + dir.z ** 2);
-        if (length <= stopDistance) {
-          throw new Error("p1 and p2 are too close — total distance is less than stopDistance.");
-        }
-      
-        const distanceToP3 = length - stopDistance;
-      
-        const unitDir = {
-          x: dir.x / length,
-          y: dir.y / length,
-          z: dir.z / length
-        };
-      
-        const p3 = {
-          x: p1.x + unitDir.x * distanceToP3,
-          y: p1.y + unitDir.y * distanceToP3,
-          z: p1.z + unitDir.z * distanceToP3
-        };
-      
-        return new Vec3(p3.x, p3.y, p3.z);
-      }
+  
 
 
 }
