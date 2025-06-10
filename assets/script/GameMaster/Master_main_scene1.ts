@@ -6,6 +6,7 @@ import { fishnode_controller } from '../FishNode/fishnode_controller';
 import { UI_Score_Controller } from './Matesr_scene_UI/UI_Score_Controller';
 import { UI_ShowTurn_Controller } from './Matesr_scene_UI/UI_ShowTurn_Controller';
 import { UI_ShowTime_Controller } from './Matesr_scene_UI/UI_ShowTime_Controller';
+import { AI1_Controller } from '../AI/AI1_Controller';
 const { ccclass, property } = _decorator;
 
 
@@ -39,7 +40,7 @@ export class Master_main_scene1 extends Component {
     EnterPosition_Local: Map<number, Vec3[]> = new Map<number, Vec3[]>();   // 所有的入场位置
     GameResult: number = 0;    // 游戏是否结束。-1悬而未决，0用户赢了，1敌人赢了
     CurRunningPartyID: number = -1   // 当前进攻的是哪一方，0是player 1是敌人
-    xianshou_byXiaoJu:number = -1;  // 小局谁先手。0是player 1是敌人。主要用于中局切换小局时，判断谁先手。
+    xianshou_byXiaoJu: number = -1;  // 小局谁先手。0是player 1是敌人。主要用于中局切换小局时，判断谁先手。
 
     FishCnt_byRole1: Map<number, number[]> = new Map<number, number[]>();  // 场上3个role，每一个role的鱼数量。主要用于空缺了补充鱼。
     cntAllowLaunch_byRole3: Map<number, number[]> = new Map<number, number[]>();  // 场上3个role，每一个role可以发射的次数
@@ -47,7 +48,7 @@ export class Master_main_scene1 extends Component {
     private _isUserLaunched: boolean = true;    // 是否用户已经发射了，这个用于控制阻塞，当用户发射前为false，发射后为true，让阻塞通过。
     private _launchResolvers: (() => void) = null; // 配合上面的
 
- 
+
 
 
     //--= 组件
@@ -101,6 +102,9 @@ export class Master_main_scene1 extends Component {
 
         // UI初始化
         this._UI_Init();
+
+        // AI初始化
+        AI1_Controller.Instance.init_AI(PlayerManager_Controller.Instance.node);
 
         // 最后一步，异步开始游戏流程
         this.StartGameFlow();
@@ -157,7 +161,7 @@ export class Master_main_scene1 extends Component {
                 this._control_undo_circle(true);
 
                 // 关闭遮罩，同意行动
-                this.obj_Musk.active = false;
+                this.obj_Musk.active = false;  // AI不应该打开，未完成。
 
                 // 显示倒计时
                 this.obj_ShowTime_banner.active = true;   // 开启显示倒计时
@@ -170,6 +174,11 @@ export class Master_main_scene1 extends Component {
 
                 // 是否有人死了，重置变量
                 this.isSomeOneDead = false
+
+                // 让ai开始思考
+                if (this.CurRunningPartyID == 1) {
+                    AI1_Controller.Instance.AI_action();  // AI开始思考行动
+                }
 
                 // 回调：用户发射后，关闭所有undo_circle；同时打开遮罩，禁止行动；设置用户已经发射标志位
                 // 等待“用户发射”标志位，也就是等待用户发射。发射后向下执行
@@ -197,18 +206,17 @@ export class Master_main_scene1 extends Component {
 
 
                 // 如果是用户时间到了，直接判负
-                if(this.script_UI_ShowTime.bTimeisAlarm == true)
-                 {
+                if (this.script_UI_ShowTime.bTimeisAlarm == true) {
                     this.GameResult = 1;
                     break;
-                 }
+                }
 
 
                 // 肯定碰撞中，还有一些小动画，等待完毕
                 await this.sleep(1000)  // 等待1s
- 
+
                 // 拉出横幅，展示比分
-                if(this.isSomeOneDead)
+                if (this.isSomeOneDead)
                     await this.script_UI_Score.ShowBigScoreBanner(this.ScoreList[0], this.ScoreList[1])
 
                 // 小局如果发生游戏结束还得想想
@@ -222,13 +230,13 @@ export class Master_main_scene1 extends Component {
 
                 // 判断场上还有人没，没人了直接游戏结束；
                 this.GameResult = this.gameEndCheck()
-                if(this.GameResult!=-1)   // 如果游戏不是悬而未决转台
+                if (this.GameResult != -1)   // 如果游戏不是悬而未决转台
                     break;
 
                 // 判断，是否所有人的执行力消耗完毕
                 const sumAllowLuach = this.get_SumAllowLunch();
                 // 如果所有人的行动力消耗干净了，跳出小局，否则，继续循环小局
-                if (sumAllowLuach[0]+sumAllowLuach[1]<=0)
+                if (sumAllowLuach[0] + sumAllowLuach[1] <= 0)
                     break;
 
                 //-- 如果还有行动力剩余，则考虑下一步用户是谁
@@ -245,7 +253,7 @@ export class Master_main_scene1 extends Component {
 
             //-- 走到这里，说明小局结束。
             // 游戏是否结束，
-            if(this.GameResult!=-1)  // 如果游戏不是悬而未决状态
+            if (this.GameResult != -1)  // 如果游戏不是悬而未决状态
             {
                 break;  // 游戏结束
             }
@@ -437,7 +445,7 @@ export class Master_main_scene1 extends Component {
                 {
                     // 记住这里，一定要把原来role鱼鱼的行动力清零。
                     // 因为这个role的鱼鱼没了，我们试图补充，但是没有，那么就把这个role的鱼鱼行动力清零
-                    this.cntAllowLaunch_byRole3.get(i_partyID)[i_roldID]=0;
+                    this.cntAllowLaunch_byRole3.get(i_partyID)[i_roldID] = 0;
                     continue;
                 }
 
@@ -466,7 +474,7 @@ export class Master_main_scene1 extends Component {
             let promises: Promise<void>[] = [];
             for (const i_fish_pe of List_FishEnterPoint) {
                 // 这里要查看一下，原来该role的鱼鱼有没有发射权。
-                const i_cntlaunch = this.get_cntAllowLaunch(i_fish_pe.fish_party,i_fish_pe.fish_role)
+                const i_cntlaunch = this.get_cntAllowLaunch(i_fish_pe.fish_party, i_fish_pe.fish_role)
                 // 入场的鱼鱼继承发射权
                 promises.push(this.enter_1_fish(i_fish_pe.fish_party, i_fish_pe.fish_type, i_fish_pe.localpos, i_fish_pe.fish_role, 0, i_cntlaunch));
             }
@@ -487,7 +495,7 @@ export class Master_main_scene1 extends Component {
 
 
     //播放谁是执行者
-    private async play_who_turn(id_play:number): Promise<void> {
+    private async play_who_turn(id_play: number): Promise<void> {
         const label_bg = this.obj_UI_Label_executer.children[0];
         const label_player0 = this.obj_UI_Label_executer.children[1];
         const label_player1 = this.obj_UI_Label_executer.children[2];
@@ -496,9 +504,9 @@ export class Master_main_scene1 extends Component {
         label_bg.active = true;   // 打开底色
         if (id_play == 0)
             label_player0.active = true;
-        else if(id_play == 1)
+        else if (id_play == 1)
             label_player1.active = true;
-        else if(id_play == 100)
+        else if (id_play == 100)
             player_switch.active = true;  // 交换先手
 
         // 等待2秒
@@ -581,7 +589,7 @@ export class Master_main_scene1 extends Component {
 
 
     // 是否对方全部噶了，如果噶了，设置游戏结束标志位
-    private gameEndCheck(bLoose:boolean = false): number {
+    private gameEndCheck(bLoose: boolean = false): number {
 
         let isExistEnemy = false;
         for (const i_node of PlayerManager_Controller.Instance.node.children)   // 遍历所有在场的鱼鱼
@@ -604,17 +612,15 @@ export class Master_main_scene1 extends Component {
 
 
     // 判断，是否执行力消耗完毕
-    get_SumAllowLunch():number[]
-    {
-        let sum0:number=0;
-        let sum1:number=0;
+    get_SumAllowLunch(): number[] {
+        let sum0: number = 0;
+        let sum1: number = 0;
 
-        for(let irole=0;irole<3;irole++)
-        {
+        for (let irole = 0; irole < 3; irole++) {
             sum0 += this.cntAllowLaunch_byRole3.get(0)[irole];
             sum1 += this.cntAllowLaunch_byRole3.get(1)[irole];
         }
-        return [sum0,sum1];
+        return [sum0, sum1];
     }
 
 
@@ -660,8 +666,7 @@ export class Master_main_scene1 extends Component {
 
 
     // 剩余发射次数查询
-    get_cntAllowLaunch(j_partyID:number, j_roldID:number):number
-    {
+    get_cntAllowLaunch(j_partyID: number, j_roldID: number): number {
         return this.cntAllowLaunch_byRole3.get(j_partyID)[j_roldID];
     }
 
@@ -733,32 +738,32 @@ export class Master_main_scene1 extends Component {
 
 
     //============== UI 控制部分
-    ScoreList:number[] = [0,0]  // 分数，是几:几的分数
-    script_UI_Score:UI_Score_Controller = null; ;
-    isSomeOneDead:boolean;   // 是否有人死了，主要是为了拉横幅展示比分
+    ScoreList: number[] = [0, 0]  // 分数，是几:几的分数
+    script_UI_Score: UI_Score_Controller = null;;
+    isSomeOneDead: boolean;   // 是否有人死了，主要是为了拉横幅展示比分
 
-    TurnID:number = 0;   // 第几轮编号,其实轮就是第几次中局
-    script_UI_Turn:UI_ShowTurn_Controller = null;
+    TurnID: number = 0;   // 第几轮编号,其实轮就是第几次中局
+    script_UI_Turn: UI_ShowTurn_Controller = null;
 
     // 显示倒计时
-    obj_ShowTime_banner:Node = null;  // 显示倒计时
-    script_UI_ShowTime:UI_ShowTime_Controller = null;
-     // 显示总伤害
-     TotoalDamage_inTurn:number=0;  // 一个小局中的总伤害
-    obj_ShowDamage_banner:Node=null;   // 显示总伤害
+    obj_ShowTime_banner: Node = null;  // 显示倒计时
+    script_UI_ShowTime: UI_ShowTime_Controller = null;
+    // 显示总伤害
+    TotoalDamage_inTurn: number = 0;  // 一个小局中的总伤害
+    obj_ShowDamage_banner: Node = null;   // 显示总伤害
 
     _UI_Init() {
         // 分数，是几:几的分数
-        this.ScoreList = [0,0]  // 分数
+        this.ScoreList = [0, 0]  // 分数
         this.script_UI_Score = this.node.children[5].getComponent(UI_Score_Controller);
         // 第几轮编号,其实轮就是第几次中局
         this.script_UI_Turn = this.node.children[6].getComponent(UI_ShowTurn_Controller);
 
-    // 显示倒计时
-    this.obj_ShowTime_banner = this.node.children[7];  // 显示倒计时
-    this.script_UI_ShowTime = this.obj_ShowTime_banner.getComponent(UI_ShowTime_Controller)
-     // 显示总伤害
-    this.obj_ShowDamage_banner=this.node.children[8];   // 显示总伤害
+        // 显示倒计时
+        this.obj_ShowTime_banner = this.node.children[7];  // 显示倒计时
+        this.script_UI_ShowTime = this.obj_ShowTime_banner.getComponent(UI_ShowTime_Controller)
+        // 显示总伤害
+        this.obj_ShowDamage_banner = this.node.children[8];   // 显示总伤害
 
     }
 
