@@ -104,7 +104,7 @@ export class Master_main_scene1 extends Component {
         this._UI_Init();
 
         // AI初始化
-        AI1_Controller.Instance.init_AI(PlayerManager_Controller.Instance.node);
+        AI1_Controller.Instance.init_AI(PlayerManager_Controller.Instance.node, this.cntAllowLaunch_byRole3);
 
         // 最后一步，异步开始游戏流程
         this.StartGameFlow();
@@ -161,7 +161,8 @@ export class Master_main_scene1 extends Component {
                 this._control_undo_circle(true);
 
                 // 关闭遮罩，同意行动
-                this.obj_Musk.active = false;  // AI不应该打开，未完成。
+                if(this.CurRunningPartyID ==0)  // 如果是玩家阵营，才关闭遮罩，允许触摸
+                    this.obj_Musk.active = false; 
 
                 // 显示倒计时
                 this.obj_ShowTime_banner.active = true;   // 开启显示倒计时

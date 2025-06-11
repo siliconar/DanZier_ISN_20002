@@ -404,7 +404,13 @@ export class fishnode_controller extends Component {
         if (!this._isCanTourch())
             return;
 
-        // 激活轮盘，并移动位置
+        // 模拟touch start
+        this.simulateTouchStart();
+    }
+
+    simulateTouchStart()
+    {
+                // 激活轮盘，并移动位置
 
         UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(true)    // 显示轮盘
         let tmp_pos = this.node.getWorldPosition()
@@ -413,9 +419,9 @@ export class fishnode_controller extends Component {
         // 激活取消按钮，并设定位置
         UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(true)   // 显示
         UI_Cancle_Manager_Controller.Instance.AutoSet_Worldpos(tmp_pos)  // 设定位置
-
-
     }
+
+
 
     // 由鱼的on消息调用
     onTowerTouchMove(event: EventTouch) {
@@ -429,6 +435,14 @@ export class fishnode_controller extends Component {
         // 轮盘移动蓄力
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
+
+        //// 模拟touch move
+        this.simulateTouchMove(tx,ty);
+
+    }
+
+    simulateTouchMove(tx:number, ty:number)
+    {
         let touch_worldpos = new Vec3(tx, ty, 0)
         UI_wheel_btn_Manager_Controller.Instance.SetSmallCirclePos(touch_worldpos)
 
@@ -447,8 +461,8 @@ export class fishnode_controller extends Component {
 
         // 取消按钮：判断是否进入。目的是控制是否高亮，不需要判断是否发射，发射时会判断的
         UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)
-
     }
+
 
     // 由鱼的on消息调用
     onTowerTouchEnd(event: EventTouch) {
@@ -462,6 +476,13 @@ export class fishnode_controller extends Component {
 
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
+
+        //// 模拟touch end
+        this.simulateTouchEnd(tx,ty);
+
+    }
+    simulateTouchEnd(tx:number,ty:number)
+    {
         let touch_worldpos = new Vec3(tx, ty, 0)
 
 
@@ -484,9 +505,6 @@ export class fishnode_controller extends Component {
 
         // 消失取消按钮
         UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
-
-
-
     }
 
     // 由鱼的on消息调用
@@ -501,27 +519,9 @@ export class fishnode_controller extends Component {
 
         let tx = event.getUILocation().x
         let ty = event.getUILocation().y
-        let touch_worldpos = new Vec3(tx, ty, 0)
-
-
-        // 虚拟路径关闭 
-        UI_Aim_Line_Manager_Controller.Instance.Clear_AimLine()
-
-        // 发射鱼鱼
-        const bCancleLaunch = UI_Cancle_Manager_Controller.Instance.CheckWheel_Inside(touch_worldpos)   // 判断是否在Cancle区域内
-        if (!bCancleLaunch)  // 如果的确要发射
-        {
-            this.Launch(UI_wheel_btn_Manager_Controller.Instance.Vec2_Strength)
-
-            // 告诉游戏导演，已经发射
-            Master_main_scene1.Instance.callback_UserLaunched();
-        }
-        // 轮盘归位,其实不用归位
-        // 轮盘消失
-        UI_wheel_btn_Manager_Controller.Instance.SwitchWheelActive(false)
-
-        // 消失取消按钮
-        UI_Cancle_Manager_Controller.Instance.ShowActive_Cancle(false)
+     
+                //// 模拟touch end
+        this.simulateTouchEnd(tx,ty);
 
     }
 
